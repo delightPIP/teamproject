@@ -1,20 +1,19 @@
 ---
-name: tospec
-description: docs/PRD.md와 docs/POLICY.md를 통합하여 화면 구조, UI 컴포넌트, 데이터 모델, 상태 변화를 구체화한 docs/SPEC.md를 생성합니다.
+name: toSpec
+description: docs/PRD.md와 docs/POLICY.md를 통합하여 추가 대화 없이 화면 구조, UI 컴포넌트, 데이터 모델, 상태 변화를 구체화한 docs/SPEC.md를 즉시 생성합니다.
 ---
 
-# `/tospec` — 상세 구현 명세(SPEC) 생성 스킬
+# `/toSpec` — 상세 구현 명세(SPEC) 생성 스킬
 
-`docs/PRD.md`의 요구사항과 `docs/POLICY.md`의 규칙을 결합하여, 개발자와 디자이너가 바로 코드를 짤 수 있는 **화면 구조 및 기능 상세 명세서(`docs/SPEC.md`)**를 작성합니다.
+`docs/PRD.md`의 요구사항과 `docs/POLICY.md`의 규칙이 이미 확정되었으므로, **추가 질의 없이 즉시 화면 구조 및 기능 상세 명세서(`docs/SPEC.md`)를 작성**합니다.
 
-## 실행 절차
+## 실행 절차 (즉시 생성)
 
 ### 1. `PRD.md`와 `POLICY.md` 통합 분석
-- `docs/PRD.md`와 `docs/POLICY.md`가 존재하는지 확인하고 로드합니다.
-- 요구사항을 구현하기 위해 필요한 **화면 요소, 데이터 형태, 상태 흐름**을 도출합니다.
+- `docs/PRD.md`와 `docs/POLICY.md`를 로드하여 명세화할 화면 컴포넌트, 데이터 필드, 사용자 흐름을 파악합니다.
 
-### 2. `docs/SPEC.md` 작성 및 저장
-다음 표준 구조에 맞춰 `docs/SPEC.md`를 생성합니다:
+### 2. `docs/SPEC.md` 즉시 작성 및 저장
+대화 핑퐁 없이 다음 표준 구조에 맞춰 `docs/SPEC.md`를 즉시 생성합니다:
 
 ```markdown
 # 📐 상세 구현 명세 (SPEC)
@@ -51,7 +50,3 @@ description: docs/PRD.md와 docs/POLICY.md를 통합하여 화면 구조, UI 컴
   - UI 렌더러 / 컴포넌트 모듈
   - 메인 진입점 및 스타일
 ```
-
-### 3. 완료 안내
-`docs/SPEC.md` 생성 완료를 보고하고 다음 단계를 안내합니다:
-> "✅ `docs/SPEC.md`가 생성되었습니다. 이제 팀원들이 작업할 독립 이슈 티켓을 쪼개기 위해 **/toissue**를 실행하세요."

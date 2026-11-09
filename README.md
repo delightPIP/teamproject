@@ -7,9 +7,9 @@
 ```mermaid
 flowchart LR
     A["1. /init<br>(레포 세팅)"] --> B["2. /prd<br>(목적 & 범위)"]
-    B --> C["3. /topolicy<br>(규칙 & 엣지케이스)"]
-    C --> D["4. /tospec<br>(화면 & 상세구현)"]
-    D --> E["5. /toissue<br>(이슈 쪼개기)"]
+    B --> C["3. /toPolicy<br>(규칙 & 엣지케이스)"]
+    C --> D["4. /toSpec<br>(화면 & 상세구현)"]
+    D --> E["5. /toIssue<br>(이슈 쪼개기)"]
     E --> F["6. /impl<br>(이슈기반 구현)"]
     F --> G["7. /pr<br>(rebase & 검증)"]
 ```
@@ -22,9 +22,9 @@ flowchart LR
 | :---: | :--- | :--- | :--- |
 | **1** | **`/init [프로젝트명]`** | 레포지토리 초기화 | 오늘 과제 뼈대 + `README.md` + `docs/` 폴더 + 리베이스 강제 Git 훅 자동 세팅 |
 | **2** | **`/prd [아이디어]`** | 제품 요구사항 정의 | 해결할 문제, 타깃 유저, MVP 필수 범위(In/Out Scope) 정의 |
-| **3** | **`/topolicy`** | 정책 및 규칙 수립 | PRD를 바탕으로 보안, 데이터, 비즈니스 계산 공식, 예외 처리 규칙 도출 |
-| **4** | **`/tospec`** | 상세 구현 명세 | 정책과 PRD를 결합하여 화면 레이아웃, 데이터 모델, 상태 흐름 명세화 |
-| **5** | **`/toissue`** | 작업 이슈 분할 | 스펙을 기반으로 티켓 목록 생성 |
+| **3** | **`/toPolicy`** | 정책 및 규칙 수립 | PRD를 바탕으로 보안, 데이터, 비즈니스 계산 공식, 예외 처리 규칙 도출 |
+| **4** | **`/toSpec`** | 상세 구현 명세 | 정책과 PRD를 결합하여 화면 레이아웃, 데이터 모델, 상태 흐름 명세화 |
+| **5** | **`/toIssue`** | 작업 이슈 분할 | 스펙을 기반으로 티켓 목록 생성 |
 | **6** | **`/impl [이슈]`** | 이슈 기반 구현 | 브랜치 확인 후 `POLICY`와 `SPEC`을 준수하며 대상 코드 구현 및 자체 검증 |
 | **7** | **`/pr`** | PR 검증 및 생성 | `main` rebase 여부 확인, 충돌 검증, 팀원 1명 승인용 PR 본문 생성 |
 
@@ -38,7 +38,7 @@ flowchart LR
 
 ```text
 https://github.com/[저장소-경로]/ejo-rules 저장소의 skills/ 폴더에 있는 스킬들을 내 AI 에이전트 전역 스킬(또는 현재 워크스페이스 스킬)로 등록해 줘.
-앞으로 내가 /init, /prd, /topolicy, /tospec, /toissue, /impl, /pr 명령어를 입력하면 해당 스킬의 SKILL.md 지침에 따라 동작하도록 설정해 줘.
+앞으로 내가 /init, /prd, /toPolicy, /toSpec, /toIssue, /impl, /pr 명령어를 입력하면 해당 스킬의 SKILL.md 지침에 따라 동작하도록 설정해 줘.
 ```
 
 *(선택: 터미널 환경에서 CLI 도구를 쓸 경우 `npx skills add [저장소-경로-또는-URL]` 로도 설치 가능)*
@@ -48,7 +48,7 @@ https://github.com/[저장소-경로]/ejo-rules 저장소의 skills/ 폴더에 �
 ## 🚀 매일 새 과제 레포에서의 사용 흐름
 
 1. 빈 과제 폴더에서 AI 채팅창에 `/init [오늘 과제명]` 실행
-2. 회의하며 화면 띄우고: `/prd` ➔ `/topolicy` ➔ `/tospec` ➔ `/toissue`
+2. 회의하며 화면 띄우고: `/prd` ➔ `/toPolicy` ➔ `/toSpec` ➔ `/toIssue`
 3. 각자 이슈를 할당받은 뒤:
    ```bash
    git checkout main && git pull origin main
@@ -61,10 +61,8 @@ https://github.com/[저장소-경로]/ejo-rules 저장소의 skills/ 폴더에 �
 
 ## 📝 커밋 컨벤션 (Karma Convention)
 
-모든 커밋 메시지는 **카르마 컨벤션** 규격을 준수합니다:
-```text
-<type>(<scope>): <subject> (#이슈번호)
-```
+- **1 Action = 1 Commit**: 하나의 논리적 작업 단위(동작 1개, 버그 1개, 파일 분리 등)마다 커밋 1개를 생성합니다. 여러 변경 사항을 한 커밋에 몰아넣지 않습니다.
+- **포맷**: `<type>(<scope>): <subject> (#이슈번호)`
 
 | Type | 설명 | 예시 |
 | :--- | :--- | :--- |

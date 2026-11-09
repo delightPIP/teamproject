@@ -1,9 +1,9 @@
 ---
-name: toissue
+name: toIssue
 description: docs/SPEC.md와 docs/POLICY.md를 바탕으로 팀원들이 자율적으로 분담할 수 있는 독립된 작업 이슈(GitHub Issues) 목록을 분할 생성합니다.
 ---
 
-# `/toissue` — 작업 이슈(Issue) 분할 스킬
+# `/toIssue` — 작업 이슈(Issue) 분할 스킬
 
 `docs/SPEC.md`와 `docs/POLICY.md`를 분석하여, 팀원들이 겹치지 않고 병렬로 작업할 수 있도록 **작업 단위(기능별) 이슈 티켓**을 분할 생성합니다.
 
@@ -47,12 +47,3 @@ GitHub Issues에 등록하거나 바로 복사해 쓸 수 있도록 정형화된
   - [ ] 데이터 호출 실패 시 화면 전체 중단 없이 에러 배너와 직전 캐시 데이터가 유지됨
   - [ ] 결과가 0건일 때 친절한 안내 문구가 표시됨
 ```
-
-### 3. 작업 분담 및 다음 단계 안내
-- 팀원들이 본인이 맡을 이슈를 하나씩 픽(Assign)하도록 안내합니다:
-> "✅ 이슈 분할이 완료되었습니다. 각자 맡을 이슈를 정한 뒤, 터미널에서 브랜치를 생성하고 **/impl #이슈번호**를 실행해 구현을 시작하세요!"
-> 
-> ```bash
-> git checkout main && git pull origin main
-> git checkout -b feat/#이슈번호-작업명
-> ```
