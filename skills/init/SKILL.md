@@ -22,7 +22,7 @@ description: 새 프로젝트 또는 일일 과제 레포지토리를 초기화�
 #### 2) `.gitignore` (스마트 병합)
 - 이미 `.gitignore`가 존재하면 **기존 내용을 절대 덮어쓰지 않고**, 다음 필수 보안/캐시 패턴 중 누락된 항목만 파일 끝에 덧붙입니다(Append):
   ```gitignore
-  # [E-Jo Rules] 필수 보안 및 환경설정
+  # [Team Rules] 필수 보안 및 환경설정
   .env
   .env.local
   *.key
