@@ -5,6 +5,7 @@ import { EmptyState } from "./home/EmptyState.tsx";
 import { HomeBanner } from "./home/HomeBanner.tsx";
 import { NearPrompt } from "./home/NearPrompt.tsx";
 import { PlanetList } from "./home/PlanetList.tsx";
+import { RediscoverySlot } from "./home/RediscoveryCard.tsx";
 import { TopBar } from "./home/TopBar.tsx";
 import "./home/home.css";
 import { store, useStore } from "./state/store.ts";
@@ -16,7 +17,7 @@ import { ProbeModal } from "./probe/ProbeModal.tsx";
 
 /**
  * 웹 껍데기. 화면 자리만 잡는다.
- * - 우주 홈: 개발 C, 이슈 #3 (재발견 카드는 개발 A와 경계 합의 후)
+ * - 우주 홈: 개발 C, 이슈 #3. 재발견 카드 데이터·이벤트는 개발 A(#7)의 useRediscoveryCard()
  * - 행성 패널·별 상세: 개발 B, 이슈 #5
  * - 탐사선: 개발 A, 이슈 #8
  * 각자 화면이 나오면 아래 "자리 표시" 컴포넌트를 바꿔 끼운다.
@@ -34,6 +35,7 @@ export function App() {
       <PlanetList />
       <EmptyState />
       <NearPrompt />
+      <RediscoverySlot />
       <HomeBanner />
       <PanelPlaceholder />
       <ProbeModal />
