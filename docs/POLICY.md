@@ -53,17 +53,18 @@
 | 행성 | 키워드 (한글) | 키워드 (영문) | 도메인 | 확장자 |
 | --- | --- | --- | --- | --- |
 | 업무 | 회의, 회의록, 보고서, 기획, 제안서, 견적, 계약, 일정, 업무, 주간보고, 결재, 발표 | meeting, minutes, report, proposal, plan, invoice, kpi, okr | notion.so, slack.com, docs.google.com, drive.google.com, atlassian.net, office.com | ppt, pptx, xls, xlsx |
-| 공부 | 강의, 과제, 시험, 요약, 정리, 노트, 필기, 수업, 스터디, 논문, 레포트, 자격증, 기출 | lecture, study, exam, assignment, course, paper, notes | inflearn.com, coursera.org, udemy.com, arxiv.org, scholar.google.com, riss.kr, dbpia.co.kr, wikipedia.org | hwp, hwpx |
-| 개발 | 코드, 에러, 오류, 버그, 배포, 서버, 함수 | code, error, bug, api, deploy, react, python, sql, docker, git | github.com, stackoverflow.com, velog.io, developer.mozilla.org, npmjs.com | py, js, ts, json, sql, log |
+| 공부 | 강의, 과제, 시험, 요약, 강의노트, 필기, 수업, 스터디, 논문, 레포트, 자격증, 기출 | lecture, study, exam, assignment, course, paper, notes | inflearn.com, coursera.org, udemy.com, arxiv.org, scholar.google.com, riss.kr, dbpia.co.kr, wikipedia.org | hwp, hwpx |
+| 개발 | 소스코드, 에러, 오류, 버그, 배포, 서버, 함수 | code, error, bug, api, deploy, react, python, sql, docker, git | github.com, stackoverflow.com, velog.io, developer.mozilla.org, npmjs.com | py, js, ts, json, sql, log |
 | 디자인 | 디자인, 레퍼런스, 시안, 무드보드, 로고, 폰트, 색상, 아이콘 | design, reference, moodboard, ui, ux, logo, font, palette | figma.com, behance.net, dribbble.com, pinterest.com, mobbin.com | fig, psd, ai, sketch |
-| 읽을거리 | 기사, 뉴스, 아티클, 칼럼, 블로그, 영상, 인터뷰, 나중에 | article, news, blog, video | youtube.com, youtu.be, medium.com, brunch.co.kr, blog.naver.com | — |
+| 읽을거리 | 뉴스, 아티클, 칼럼, 블로그, 영상, 인터뷰, 나중에 | article, news, blog, video | youtube.com, youtu.be, medium.com, brunch.co.kr, blog.naver.com | — |
 | 생활 | 여행, 맛집, 예약, 쇼핑, 영수증, 레시피, 항공권, 숙소, 주문 | travel, recipe, receipt, order | coupang.com, musinsa.com, map.naver.com, airbnb.co.kr | — |
 | 미분류 | (키워드 없음. 어디에도 맞지 않으면 여기로) | | | |
 
 - **비교 대상**: 저장하는 순간(3초 목표 안)에 있는 값만 쓴다.
-  - 쓴다: 파일 이름(확장자 제외), 확장자, 링크 URL(도메인·경로), 텍스트 본문 앞 2,000자
+  - 쓴다: 파일 이름(확장자 제외), 확장자, 링크 URL의 **도메인**, 텍스트 본문 앞 2,000자
+  - 링크 URL의 경로·검색어는 비교하지 않는다. `example.com/api/…`처럼 경로의 짧은 단어(`api`, `ui`)로 엉뚱한 행성에 가지 않게 하기 위해서다 (2026-11-11 개발 A 리뷰 반영)
   - 쓰지 않는다: 링크 제목(저장 뒤에 가져온다, 1-4), 이미지 내용, PDF 등 파일 본문
-- **비교 방법**: 대소문자를 구분하지 않는다. 한글 키워드는 부분 일치("회의록2"에 "회의"), 영문 키워드는 **단어 단위** 일치("mail"에서 "ai"를 찾지 않는다). 도메인은 그 도메인이거나 하위 도메인이면 일치한다(`m.youtube.com` → `youtube.com`).
+- **비교 방법**: 대소문자를 구분하지 않는다. 한글 키워드는 부분 일치("회의록2"에 "회의"). 그래서 흔한 낱말(정리·기사·노트·코드)은 키워드에서 빼거나 더 긴 말(강의노트·소스코드)로 바꿨다, 영문 키워드는 **단어 단위** 일치("mail"에서 "ai"를 찾지 않는다). 도메인은 그 도메인이거나 하위 도메인이면 일치한다(`m.youtube.com` → `youtube.com`).
 - **고르는 순서**: ① 도메인이 맞는 행성 → ② 확장자가 맞는 행성 → ③ 키워드가 가장 많이 맞은 행성 → 동점이면 행성 목록 순서(만든 순서).
 - **행성 이름도 키워드다.** 사용자가 만든 행성(예: "토익")은 이름이 곧 키워드다. 기본 행성은 위 키워드 + 지금 이름이다. 이름을 바꾸면 새 이름으로 맞춘다.
 - 어느 행성에도 맞지 않으면 **"미분류"** 에 넣는다. "미분류"는 이름을 바꾸거나 지울 수 없다.

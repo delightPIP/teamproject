@@ -8,9 +8,11 @@ export interface SceneState {
   nearPlanetId: string | null;
   /** 기간 안 별이 상한을 넘어 별을 그리지 않음 (POLICY 3-4) */
   starsHidden: boolean;
+  /** 최근 1초 동안 그린 프레임 수 (성능 측정) */
+  fps: number;
 }
 
-export const sceneState = createStore<SceneState>()(() => ({ webgl: null, nearPlanetId: null, starsHidden: false }));
+export const sceneState = createStore<SceneState>()(() => ({ webgl: null, nearPlanetId: null, starsHidden: false, fps: 0 }));
 
 export function useSceneState<T>(selector: (s: SceneState) => T): T {
   return useStore(sceneState, selector);

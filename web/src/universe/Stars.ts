@@ -1,6 +1,6 @@
 // 행성 주위를 도는 별들. 2,000개까지 그려야 해서 별 모양 메시 하나를 InstancedMesh 로 반복한다 (ADR 0002).
 import * as THREE from "three";
-import type { Star, StarKind } from "@spacelog/shared/types";
+import type { Star } from "@spacelog/shared/types";
 import { starOrbit, type Orbit } from "./layout.ts";
 import { cssColor, type Toon } from "./toon.ts";
 
@@ -28,12 +28,7 @@ export class StarsView {
   private readonly up = new THREE.Vector3(0, 1, 0);
 
   constructor(stars: Star[], toon: Toon) {
-    const kindColor: Record<StarKind, THREE.Color> = {
-      image: cssColor("kind-image", "#ffd23f"),
-      file: cssColor("kind-file", "#ff9a3c"),
-      link: cssColor("kind-link", "#5ec8ff"),
-      text: cssColor("kind-text", "#ffffff"),
-    };
+    const yellow = cssColor("yellow", "#ffd23f"); // 별은 모두 노랑, 고른 별만 핑크 (DESIGN 8장)
     const geo = starGeometry();
     const count = Math.max(stars.length, 1);
     this.mesh = new THREE.InstancedMesh(geo, toon.mat(0xffffff, { emissive: 0x222222 }), count);
@@ -49,7 +44,7 @@ export class StarsView {
         tilt: new THREE.Quaternion().setFromEuler(new THREE.Euler(orbit.tiltX, 0, orbit.tiltZ)),
         angle: orbit.phase,
         spin: 1 + (orbit.phase % 1.4),
-        color: kindColor[star.kind],
+        color: yellow,
       };
       this.items.push(item);
       this.mesh.setColorAt(i, item.color);
@@ -57,9 +52,10 @@ export class StarsView {
     this.mesh.frustumCulled = this.outline.frustumCulled = false; // 별이 행성을 따라 움직여 경계 상자가 맞지 않는다
   }
 
-  /** 클릭한 인스턴스 → 별 id */
-  idAt(instanceId: number): string | undefined {
-    return this.items[instanceId]?.id;
+  /** 클릭한 인스턴스 → 별 id와 그 별의 행성 */
+  starAt(instanceId: number): { id: string; planetId: string } | undefined {
+    const it = this.items[instanceId];
+    return it && { id: it.id, planetId: it.planetId };
   }
 
   select(starId: string | null): void {
@@ -79,7 +75,7 @@ export class StarsView {
       if (!planet || planet.radius <= 0.01) {
         this.m.makeScale(0, 0, 0);
       } else {
-        const R = planet.radius * it.orbit.radiusFactor;
+        const R = planet.radius + it.orbit.radiusOffset;
         this.p.set(Math.cos(it.angle) * R, 0, Math.sin(it.angle) * R).applyQuaternion(it.tilt).add(planet.position);
         this.q.setFromAxisAngle(this.up, reducedMotion ? 0 : t * it.spin);
         this.m.compose(this.p, this.q, this.s);

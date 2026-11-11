@@ -2,13 +2,44 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { apiError, ERROR_STATUS, type ErrorCode } from "@spacelog/shared/errors";
 import type { ServerConfig } from "./config.ts";
+import { RouteError } from "./http/routeError.ts";
 import { checkRequest } from "./security.ts";
 import { serveStatic } from "./static.ts";
 
-export type RouteHandler = (req: IncomingMessage) => unknown | Promise<unknown>;
+/** params: 경로의 `:이름` 자리 값 (디코딩됨) */
+export type RouteHandler = (req: IncomingMessage, params: Record<string, string>) => unknown | Promise<unknown>;
 
-/** "METHOD /path" → 핸들러. 반환값을 200 JSON으로 보낸다 */
+/**
+ * "METHOD /path" → 핸들러. 경로에 `:id` 같은 자리를 둘 수 있다 (예 "GET /api/stars/:id").
+ * 반환값을 200 JSON으로 보낸다. 실패는 `throw RouteError.of("NOT_FOUND")` (http/routeError.ts).
+ */
 export const routes = new Map<string, RouteHandler>([["GET /api/health", () => ({ ok: true })]]);
+
+/** 정확히 같은 경로를 먼저, 없으면 `:이름` 자리가 있는 경로를 찾는다 */
+export function matchRoute(method: string, path: string): { handler: RouteHandler; params: Record<string, string> } | null {
+  const exact = routes.get(`${method} ${path}`);
+  if (exact) return { handler: exact, params: {} };
+  const parts = path.split("/");
+  for (const [key, handler] of routes) {
+    const [m, pattern] = key.split(" ");
+    if (m !== method || !pattern.includes(":")) continue;
+    const want = pattern.split("/");
+    if (want.length !== parts.length) continue;
+    const params: Record<string, string> = {};
+    const ok = want.every((w, i) => {
+      if (!w.startsWith(":")) return w === parts[i];
+      if (!parts[i]) return false;
+      try {
+        params[w.slice(1)] = decodeURIComponent(parts[i]);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    if (ok) return { handler, params };
+  }
+  return null;
+}
 
 export const MAX_PORT_ATTEMPTS = 10;
 
@@ -40,15 +71,20 @@ export function createHandler(config: ServerConfig, getPort: () => number) {
 
     try {
       if (isApi) {
-        const route = routes.get(`${method} ${path}`);
+        const route = matchRoute(method, path);
         if (!route) return sendError(res, "NOT_FOUND");
-        return sendJson(res, 200, await route(req));
+        return sendJson(res, 200, await route.handler(req, route.params));
       }
       if ((method === "GET" || method === "HEAD") && config.webDir && (await serveStatic(config.webDir, path, method, res))) return;
       sendError(res, "NOT_FOUND");
     } catch (err) {
+      if (err instanceof RouteError && !res.headersSent) {
+        if (err.code) return sendError(res, err.code);
+        res.writeHead(err.status).end(); // 코드 없는 RouteError: 본문 없이 상태만
+        return;
+      }
       console.error("[server]", method, path, err);
-      // 17종 코드에 없는 실패라 본문 없이 500. 웹은 "UNKNOWN"으로 처리한다 (web/src/api/client.ts)
+      // 오류 코드에 없는 예상 못 한 실패라 본문 없이 500. 웹은 "UNKNOWN"으로 처리한다 (web/src/api/client.ts)
       if (!res.headersSent) res.writeHead(500).end();
       else res.destroy();
     }

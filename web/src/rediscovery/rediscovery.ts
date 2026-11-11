@@ -17,9 +17,15 @@ export async function openRediscoveredStar(star: Star): Promise<void> {
   const s = store.getState();
   const period = periodToShowStar(starLocalDate(star), s.period);
   if (period) await s.setPeriod(period);
-  await store.getState().flyToPlanet(star.planetId);
+  // 비행 연출은 화면 갱신(requestAnimationFrame)에 묶여 있어, 탭이 가려져 있으면 끝나지 않는다.
+  // 연출이 늦어도 별 상세는 반드시 열리도록 기다리는 시간을 제한한다.
+  await Promise.race([store.getState().flyToPlanet(star.planetId), wait(FLY_WAIT_LIMIT_MS)]);
   store.getState().openStar(star.id);
 }
+
+/** 자동 비행(1.2초)보다 넉넉하게 */
+export const FLY_WAIT_LIMIT_MS = 2500;
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /** 수집 앱 알림이 연 주소(`#/star/:id?from=rediscovery`) 처리. opened 이벤트는 수집 앱이 이미 기록한다 (SPEC 3-6) */
 export async function handleRediscoveryDeepLink(routeStarId: string | null, params: URLSearchParams): Promise<boolean> {

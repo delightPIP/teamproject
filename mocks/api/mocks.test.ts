@@ -96,7 +96,7 @@ describe("목업", () => {
     assert.deepEqual(load("health.json"), { ok: true });
   });
 
-  it("errors.json — 17종 모두, 응답 형식 일치", () => {
+  it("errors.json — 18종 모두, 응답 형식 일치", () => {
     const errs = load("errors.json");
     assert.ok(errs.every(isApiError));
     assert.deepEqual(errs.map((e: { error: { code: string } }) => e.error.code), [...ERROR_CODES]);

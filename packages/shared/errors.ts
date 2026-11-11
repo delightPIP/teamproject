@@ -1,4 +1,4 @@
-// 오류 코드 17종 — docs/SPEC.md 2-6. 응답 형식: {"error":{"code","message"}}
+// 오류 코드 18종 — docs/SPEC.md 2-6. 응답 형식: {"error":{"code","message"}}
 // 문구 근거: SPEC 1-1·1-5·1-6·3-3, POLICY 3장. 근거 없는 문구는 (SPEC 제안) 표시.
 
 export const ERROR_CODES = [
@@ -19,6 +19,7 @@ export const ERROR_CODES = [
   "DISK_FULL",
   "ORIGINAL_MISSING",
   "NOT_FOUND",
+  "INVALID_REQUEST", // 요청 본문이 JSON이 아니거나 너무 큼, 필수 값 없음 (개발 B, #4)
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
@@ -46,6 +47,7 @@ export const ERROR_STATUS: Record<ErrorCode, number> = {
   DISK_FULL: 507,
   ORIGINAL_MISSING: 404, // 원본 열기·원본 바이트 요청 시
   NOT_FOUND: 404,
+  INVALID_REQUEST: 400,
 };
 
 /**
@@ -70,6 +72,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   DISK_FULL: "디스크 공간이 부족해요", // (SPEC 제안) P 3-1
   ORIGINAL_MISSING: "원본을 찾을 수 없어요", // P 3-4
   NOT_FOUND: "찾는 기록이 없어요", // (SPEC 제안)
+  INVALID_REQUEST: "요청 형식이 올바르지 않아요", // (SPEC 제안) 보통 코드 실수일 때만 보인다
 };
 
 export function formatErrorMessage(code: ErrorCode, vars: Record<string, string> = {}): string {

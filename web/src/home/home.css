@@ -68,3 +68,5 @@ kbd { font-family: var(--font-mono); font-size: var(--font-size-xs); background:
 @media (max-width: 760px) {
   .rediscovery { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
 }
+
+.perf { position: fixed; left: 50%; top: var(--gutter); transform: translateX(-50%); z-index: 40; padding: 4px 12px; font: 600 13px var(--font-mono); }

@@ -1,7 +1,7 @@
 # 📐 상세 구현 명세 (SPEC)
 
 > **상태**: 1차 초안 · 2026-11-11 · 기준 문서 [docs/PRD.md](PRD.md), [docs/POLICY.md](POLICY.md)
-> ⚠ PRD Q7이 재검토 중이다 (3D안 / 2.5D안). 이 문서의 1-4, 2-5 `camera`, 3-5(비행·착륙), 6장 S1·S3은 3D안 기준으로 쓴 것이라 Q7 결정 후 고친다. 데이터 모델(2장)과 API(2-6)는 어느 안이든 같다.
+> PRD Q7은 **3D안으로 정해졌다** (2026-11-11). 이 문서의 1-4, 2-5 `camera`, 3-5(비행·착륙), 6장 S1·S3은 원래 3D안 기준으로 썼으므로 그대로 둔다. 다만 `DESIGN.md`(PR #24)와 한 줄씩 대조하지는 않았다 SQ4(패널이 열려 있어도 비행 키를 받고 멀어지면 닫는다, 이슈 #36·`DESIGN.md` v0.5·PR #40)는 이 문서 2-5 `closePanel`·3-5에 **아직 반영하지 않았다**. 데이터 모델(2장)과 API(2-6)는 어느 안이든 같다.
 > **(잠정)** 표시는 PRD 열린 질문(Q1·Q3·Q9)이나 1주 차 측정에 따라 바뀔 수 있는 값이다. **(SPEC 제안)** 표시는 PRD·POLICY에 없어 이 문서가 처음 정한 값으로, 담당자가 1주 차 초에 확정한다.
 > 정책 근거는 `P 2-2`처럼 POLICY 절 번호로 적는다.
 
@@ -59,9 +59,15 @@ flowchart LR
 | 요소 | 내용 |
 | --- | --- |
 | 트레이·메뉴바 아이콘 | 상태 3종: 정상 / 서버 오류(빨간 점) / 보관함 오류(노란 점) |
-| 아이콘 메뉴 | 우주 보기 · 드롭존 보이기/숨기기 · 클립보드 넣기(단축키 표시) · 설정 · 종료 |
+| 아이콘 메뉴 | 우주 보기 · **오늘의 별 보기** · 드롭존 보이기/숨기기 · 클립보드 넣기(단축키 표시) · 설정 · 종료 |
 | 전역 단축키 | 지금 클립보드 내용을 기록 1개로 저장 → 드롭존이 펼쳐지며 `confirm`. 기본값 `⌘⇧Space` / `Ctrl+Shift+Space` (SPEC 제안) |
 | 설정 창 | 단축키 바꾸기 · 재발견 알림 켜기/끄기 · 로그인 시 자동 실행 · 보관함 위치(경로, [폴더 열기], [위치 바꾸기]) · 디스크 사용량(보관함 크기 / 남은 공간) |
+
+> **구현에서 정해진 것 (2026-11-11, `feat/#6-collector`)**
+> - **설정은 수집 앱이 가진다.** `userData/settings.json`에 저장하고 서버 API(`/api/settings`)를 쓰지 않는다. 보관함 위치는 서버를 띄울 때 `SPACELOG_VAULT`로 넘긴다.
+> - **디스크 남은 공간은 수집 앱이 직접 잰다** (`fs.statfs`). `/api/storage`를 쓰지 않는다.
+> - **로그인 시 자동 실행은 개발 모드에서 값만 저장하고 운영체제에 등록하지 않는다.** 데모는 개발 모드로 하므로 이 항목은 시연 대상이 아니다.
+> - **"오늘의 별 보기"** 는 알림 클릭이 안 될 때를 위한 두 번째 입구다 (1-3, PRD 8장 리스크).
 
 > **개발 전용 알림 시각 (SPEC 제안, PO)**: 환경 변수 `SPACELOG_NOTIFY_AT="HH:MM"`이 있으면 2-4의 `notificationTime`을 덮어쓴다. 데모에서 15:00을 기다릴 수 없기 때문이다 (DEMO 1장 사전 준비). 설정 창에는 넣지 않고, 배포 빌드에서는 읽지 않는다.
 
@@ -69,6 +75,7 @@ flowchart LR
 
 - 운영체제 기본 알림. 제목 `N일 전 오늘의 별 ✦`, 본문 `{별 제목} · {행성 이름}`
 - 클릭 → 로컬 웹을 `#/star/{starId}?from=rediscovery` 로 연다 (3-4 흐름)
+- **알림 클릭이 동작하지 않을 때의 두 번째 입구**: 트레이 메뉴의 **"오늘의 별 보기"** 가 같은 주소를 연다. 웹의 재발견 카드가 세 번째 입구다 (PRD 8장 리스크)
 - 보내는 시각·조건은 P 2-2를 따른다. 별 고르기 결과는 서버 API(`GET /api/rediscovery/today`)에서 받는다.
 
 ### 1-4. 로컬 웹 — 우주 홈 (구현 개발 C · 디자인 디자이너 1)
@@ -270,7 +277,7 @@ interface RediscoveryEvent {     // 성공 기준 "다시 만난다" 측정값 (
 }
 ```
 
-### 2-4. Settings (수집 앱과 서버가 공유)
+### 2-4. Settings (수집 앱이 가진다)
 
 ```typescript
 interface Settings {
@@ -285,6 +292,8 @@ interface Settings {
   onboardingDone: boolean;
 }
 ```
+
+**저장 위치**: 수집 앱의 `userData/settings.json` (2026-11-11 구현에서 확정). 서버는 설정 API를 두지 않는다. 서버가 알아야 하는 보관함 위치는 서버를 띄울 때 `SPACELOG_VAULT`로 넘긴다.
 
 ### 2-5. 웹 클라이언트 상태 (웹 화면 계약, 개발 A·B·C 합의 대상)
 
@@ -345,9 +354,9 @@ URL(해시 라우팅): `#/` 우주 홈 · `#/planet/:id` · `#/star/:id` · `#/p
 | `GET /api/rediscovery/today` | 수집 앱, 웹 | 오늘의 픽(없으면 만들고 저장) → `{star, daysAgo}` 또는 `null` |
 | `POST /api/rediscovery/events` | 수집 앱, 웹 | 뜬 횟수·연 횟수·닫은 횟수 기록 |
 | `POST /api/export` | 웹 | `{items: CargoItem[], format}` → `{content, charCount, overLimit}` |
-| `GET /api/settings` · `PATCH /api/settings` · `GET /api/storage` | 수집 앱 | 설정, 보관함 크기·남은 공간 |
+| ~~`GET /api/settings` · `PATCH /api/settings` · `GET /api/storage`~~ | — | **두지 않는다 (2026-11-11).** 설정은 수집 앱의 `userData/settings.json`, 남은 공간은 수집 앱이 직접 잰다 (1-2). 보관함 크기가 필요해지면 그때 다시 본다 |
 
-오류 코드: `UNAUTHORIZED` · `FORBIDDEN_ORIGIN` · `DUPLICATE` · `FOLDER_NOT_ALLOWED` · `FILE_TOO_LARGE` · `TOO_MANY_FILES` · `UNSUPPORTED_CLIPBOARD` · `TEXT_EMPTY` · `PLANET_NAME_INVALID` · `PLANET_NAME_DUPLICATE` · `PLANET_LIMIT` · `PLANET_NOT_EMPTY` · `PLANET_SYSTEM` · `VAULT_UNAVAILABLE` · `DISK_FULL` · `ORIGINAL_MISSING` · `NOT_FOUND`
+오류 코드: `UNAUTHORIZED` · `FORBIDDEN_ORIGIN` · `DUPLICATE` · `FOLDER_NOT_ALLOWED` · `FILE_TOO_LARGE` · `TOO_MANY_FILES` · `UNSUPPORTED_CLIPBOARD` · `TEXT_EMPTY` · `PLANET_NAME_INVALID` · `PLANET_NAME_DUPLICATE` · `PLANET_LIMIT` · `PLANET_NOT_EMPTY` · `PLANET_SYSTEM` · `VAULT_UNAVAILABLE` · `DISK_FULL` · `ORIGINAL_MISSING` · `NOT_FOUND` · `INVALID_REQUEST`(본문이 JSON이 아니거나 너무 큼, 필수 값 없음. 2026-11-11 개발 B 추가)
 
 ### 2-7. 보관함 폴더 구조 (개발 B)
 
@@ -392,12 +401,14 @@ sequenceDiagram
         S-->>D: 만든 별 + 배정된 행성
         D->>U: confirm 카드 (저장 완료 표시 = 측정 끝)
     end
-    S-)S: (비동기) 썸네일 생성, 링크 제목·썸네일 GET (5초, 재시도 1번)
+    S-)S: (비동기) 썸네일 생성, 링크 제목·썸네일 GET (5초, 재시도 1번) — 2026-11-11 범위에서 뺌
     U->>D: 메모·행성 바꾸기 → PATCH /api/stars, 또는 건너뛰기
 ```
 
-- **종류 판별**: 파일 → 이미지 MIME이면 `image`, 아니면 `file`. 텍스트가 `http(s)://`로 시작하는 URL 한 줄이면 `link`, 아니면 `text`. 텍스트가 100,000자를 넘으면 `.txt` 파일로 만들어 `file`로 저장 (P 2-6).
-- **행성 자동 배정** (P 2-3 키워드 규칙): 파일 이름·확장자·URL·텍스트 앞 2,000자를 행성 키워드와 비교해 도메인 → 확장자 → 키워드 개수 순으로 고른다. 행성 이름도 키워드다. 맞는 행성이 없으면 미분류. 링크 제목은 저장 뒤에 오므로 쓰지 않는다.
+> **2026-11-11 PO 축소**: 위 흐름의 마지막 줄(비동기 썸네일 생성, 링크 제목·썸네일 GET)은 **이번 범위에서 뺀다** (PRD 3장). `thumbnailPath`·`linkTitle`은 비어 있고, 화면은 종류 아이콘과 도메인으로 대체한다 (1-5, P 2-7에 이미 정해진 대체 규칙). 서버가 밖으로 나가는 요청을 아예 하지 않으므로 POLICY 1-1의 유일한 예외도 이번엔 발생하지 않는다.
+
+- **종류 판별**: 파일 → 이미지 MIME이면 `image`, 아니면 `file`. 텍스트가 `http(s)://`로 시작하는 URL 한 줄이면 `link`, 아니면 `text`. 텍스트가 100,000자를 넘으면 **수집 앱이** `.txt` 파일로 만들어 `multipart`로 올리고 `file`로 저장한다 (P 2-6, 2026-11-11 구현에서 주체 확정).
+- **행성 자동 배정** (P 2-3 키워드 규칙): 파일 이름·확장자·링크 도메인(경로 제외)·텍스트 앞 2,000자를 행성 키워드와 비교해 도메인 → 확장자 → 키워드 개수 순으로 고른다. 행성 이름도 키워드다. 맞는 행성이 없으면 미분류. 링크 제목은 저장 뒤에 오므로 쓰지 않는다.
 - 여러 파일을 넣으면 파일마다 Star를 만들고, 거부된 파일은 이유와 함께 따로 돌려준다 (P 3-3).
 
 ### 3-3. 웹 초기 로드 (개발 C)
@@ -617,4 +628,5 @@ URL: https://example.com/three-perf
 | S2 | 넣은 직후 확인 카드의 자동 접힘 10초, 전역 단축키 기본값, 기본 포트 47800은 SPEC 제안값 → **PO 확정 (2026-11-11)**: 세 값 모두 그대로 간다. 스파이크에서 `Ctrl+Shift+Space` 등록과 47800 바인딩이 첫 시도에 성공했다. 자동 접힘 10초는 인터뷰 보류로 그대로 간다. 데모 반응으로 다시 본다 | PO |
 | S3 | 딥링크로 기간 밖의 별을 열 때 기간을 `직접 지정`으로 바꾸는 동작 | 개발 A · C |
 | S4 | 행성 삭제 조건 "별 0개"를 전체 기준으로 볼지 기간 기준으로 볼지 → **개발 B 확정 (2026-11-11)**: 전체 기간 기준 (P 2-4) | 개발 B |
+| S6 | **데모를 어느 서버로 보여줄지** → 실서버(#33 기록 넣기·조회 머지 시) / 개발 전용 가짜 서버(`SPACELOG_SERVER_ENTRY=dev/mockServer.mjs`, 메모리 저장, 2026-11-11 수집 앱 구현에 들어감). 가짜 서버로 하면 **기록이 남지 않고 웹 조회와 이어지지 않는다** | PO |
 | S5 | 문서 행성에 들어갈 확장자 목록 → **Q1 키워드 규칙으로 대체 (2026-11-11)**: "문서" 행성이 없어지고 확장자는 주제별 키워드 표에 들어간다 (P 2-3) | 개발 B |

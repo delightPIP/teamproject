@@ -1,4 +1,5 @@
 import { store, useStore } from "../state/store.ts";
+import { planetColorToken } from "../ui/planetColor.ts";
 import { useSceneState } from "../universe/sceneState.ts";
 
 /**
@@ -27,7 +28,7 @@ export function PlanetList() {
                 aria-current={p.id === selected ? "true" : undefined}
                 onClick={() => (n > 0 ? store.getState().flyToPlanet(p.id, "openPanel") : store.getState().openPanel(p.id))}
               >
-                <span className="dock__dot" style={{ background: `var(--${p.colorToken})` }} />
+                <span className="dock__dot" style={{ background: `var(--${planetColorToken(p.colorToken)})` }} />
                 <span className="dock__name">{p.name}</span>
                 <span className="dock__n">{n}</span>
               </button>

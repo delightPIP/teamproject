@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import { store, type Store } from "../state/store.ts";
 import { CameraController } from "./CameraController.ts";
-import { planetPositions, planetRadius, PLANET_BASE, STAR_LIMIT } from "./layout.ts";
+import { planetBaseRadius, planetPositions, planetRadius, PLANET_MAX_R, PLANET_MIN_R, STAR_LIMIT } from "./layout.ts";
 import { PlanetView } from "./Planet.ts";
 import { landOn } from "./land.ts";
 import { Player } from "./Player.ts";
@@ -13,7 +13,10 @@ import { StarsView } from "./Stars.ts";
 import { cssColor, disposeTree, Toon } from "./toon.ts";
 
 const MAX_SPEED = 15;
-const FLY_SECONDS = 1.2; // 자동 비행 (SPEC 3-5)
+const FLY_SECONDS = 1.2;
+const LAND_DISTANCE = 8; // 행성 표면에서 이 안이면 착륙 안내 (DESIGN W-01)
+const ARRIVE_GAP = 4.5; // 자동 비행이 멈추는 곳: 행성 표면 + 4.5 (DESIGN 시안 flyTo)
+const PANEL_CLOSE_DISTANCE = 14; // 패널 행성 표면에서 이만큼 멀어지면 패널을 닫는다 (DESIGN.md 9-4) // 자동 비행 (SPEC 3-5)
 const MOVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"]);
 
 export class UniverseScene {
@@ -29,10 +32,14 @@ export class UniverseScene {
   private readonly vel = new THREE.Vector3();
   private readonly keys = new Set<string>();
   private readonly reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  private flight: { from: THREE.Vector3; to: THREE.Vector3; t: number; done(): void } | null = null;
+  private flight: { from: THREE.Vector3; to: THREE.Vector3; t: number; done(arrived: boolean): void } | null = null;
   private drag: { x: number; y: number; sx: number; sy: number } | null = null;
   private raf = 0;
   private t = 0;
+  private frames = 0;
+  private fpsSince = 0;
+  /** 패널 행성 가까이에 한 번이라도 있었는지. 멀리서 연 패널(목록·딥링크)은 바로 닫지 않으려고 둔다 */
+  private panelNear = false;
   private readonly cleanups: (() => void)[] = [];
 
   private readonly container: HTMLElement;
@@ -71,7 +78,7 @@ export class UniverseScene {
   dispose(): void {
     cancelAnimationFrame(this.raf);
     store.getState().registerFlyToPlanet(null);
-    this.flight?.done();
+    this.flight?.done(false);
     this.cleanups.forEach((c) => c());
     this.stars?.dispose();
     disposeTree(this.scene);
@@ -84,13 +91,14 @@ export class UniverseScene {
   // ───────── 데이터 → 장면 ─────────
 
   private sync(s: Store, prev: Store | null): void {
-    if (!prev || s.planets !== prev.planets) this.syncPlanets(s);
+    if (!prev || s.planets !== prev.planets || s.stars.length !== prev.stars.length) this.syncPlanets(s);
     if (!prev || s.stars !== prev.stars) this.syncStars(s);
     if (!prev || s.selectedStarId !== prev.selectedStarId) this.stars?.select(s.selectedStarId);
   }
 
   private syncPlanets(s: Store): void {
     const positions = planetPositions(s.planets);
+    const starsHidden = s.stars.length > STAR_LIMIT;
     const alive = new Set<string>();
     for (const p of s.planets) {
       alive.add(p.id);
@@ -103,7 +111,9 @@ export class UniverseScene {
         view.update(p);
         view.position.set(...positions.get(p.id)!);
       }
-      view.setTargetRadius(planetRadius(p.starCountInPeriod ?? 0));
+      const n = p.starCountInPeriod ?? 0;
+      // 별 상한 초과면 별을 그리지 않고 행성은 최대 반지름(6)으로 둔다 (DESIGN W-01 "별 상한 초과 상태")
+      view.setTargetRadius(n > 0 && starsHidden ? PLANET_MAX_R : planetRadius(n, planetBaseRadius(p.id)));
     }
     for (const [id, view] of this.planets) {
       if (alive.has(id)) continue;
@@ -113,7 +123,7 @@ export class UniverseScene {
     this.cam.frame(
       s.planets
         .filter((p) => (p.starCountInPeriod ?? 0) > 0)
-        .map((p) => ({ pos: positions.get(p.id)!, r: planetRadius(p.starCountInPeriod ?? 0) })),
+        .map((p) => ({ pos: positions.get(p.id)!, r: planetRadius(p.starCountInPeriod ?? 0, planetBaseRadius(p.id)) })),
     );
   }
 
@@ -130,32 +140,32 @@ export class UniverseScene {
 
   // ───────── 자동 비행 (flyToPlanet 구현) ─────────
 
-  private flyTo(planetId: string): Promise<void> {
+  private flyTo(planetId: string): Promise<boolean> {
     const view = this.planets.get(planetId);
-    if (!view) return Promise.resolve();
-    this.flight?.done();
-    const r = Math.max(view.radius, PLANET_BASE);
+    if (!view) return Promise.resolve(true);
+    this.flight?.done(false);
+    const r = Math.max(view.radius, PLANET_MIN_R);
     const from = this.player.root.position.clone();
     const dir = from.clone().sub(view.position);
     dir.y = Math.max(dir.y, 0);
     if (dir.lengthSq() < 1e-6) dir.set(0, 0.3, 1);
     dir.normalize();
-    // 행성 앞 2.5r 지점
-    const to = view.position.clone().addScaledVector(dir, r * 2.5).add(new THREE.Vector3(0, 1.2, 0));
+    // 행성 표면에서 4.5 떨어진 곳에 선다 (DESIGN 시안). 착륙 안내 거리(8) 안이라 도착하면 바로 E로 열 수 있다
+    const to = view.position.clone().addScaledVector(dir, r + ARRIVE_GAP).add(new THREE.Vector3(0, 1.2, 0));
     this.vel.set(0, 0, 0);
     if (this.reducedMotion.matches) {
       this.player.root.position.copy(to); // 축소: 연출 없이 즉시 이동
       this.cam.yaw = Math.atan2(dir.x, dir.z);
-      return Promise.resolve();
+      return Promise.resolve(true);
     }
     return new Promise((resolve) => {
       this.flight = {
         from,
         to,
         t: 0,
-        done: () => {
+        done: (arrived) => {
           this.flight = null;
-          resolve();
+          resolve(arrived);
         },
       };
     });
@@ -178,7 +188,11 @@ export class UniverseScene {
       if (e.code === "Space" && e.target instanceof Element && e.target.closest("button, a[href], [role='button']")) return;
       if (MOVE_KEYS.has(e.code)) {
         if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
-        if (this.flight) return; // 자동 비행 중에는 조작을 받지 않는다
+        if (this.flight) {
+          // 자동 비행 중 이동 키 → 그 자리에서 멈추고 직접 조종 (DESIGN 9-4)
+          this.vel.set(0, 0, 0);
+          this.flight.done(false);
+        }
         this.keys.add(e.code);
         const s = store.getState();
         if (s.camera === "overview" || s.camera === "landed") s.setCamera("flight");
@@ -229,8 +243,10 @@ export class UniverseScene {
       return;
     }
     if (hit.object === this.stars?.mesh && hit.instanceId !== undefined) {
-      const id = this.stars.idAt(hit.instanceId);
-      if (id) s.openStar(id);
+      // 별 클릭 → 그 별의 행성으로 날아간 뒤 별 상세 (DESIGN 9-4). 이동 키로 멈추면 열지 않는다
+      const star = this.stars.starAt(hit.instanceId);
+      if (star)
+        void s.flyToPlanet(star.planetId).then((arrived) => arrived && store.getState().openStar(star.id));
     } else if (hit.object.userData.planetId) {
       void s.flyToPlanet(hit.object.userData.planetId, "openPanel");
     }
@@ -269,7 +285,7 @@ export class UniverseScene {
       this.cam.turnToward(Math.atan2(this.vel.x, this.vel.z), dt);
       if (f.t >= 1) {
         this.vel.set(0, 0, 0);
-        f.done();
+        f.done(true);
       }
     } else {
       const { forward, right } = this.cam.axes();
@@ -303,10 +319,23 @@ export class UniverseScene {
         if (vn < 0) this.vel.addScaledVector(tmp, -vn * 1.4);
       }
       const surface = d - view.radius;
-      if (surface < 3 * view.radius && surface < nearest) {
+      if (surface < LAND_DISTANCE && surface < nearest) {
         nearest = surface;
         near = view.id;
       }
+    }
+    // SQ4 (#36, DESIGN.md 9-4): 패널이 열려 있어도 비행 키는 받고, 패널 행성에서 멀어지면 패널을 닫는다
+    const panelPlanet = s.selectedPlanetId ? this.planets.get(s.selectedPlanetId) : undefined;
+    if (panelPlanet?.visible && !this.flight) {
+      const surface = pos.distanceTo(panelPlanet.position) - panelPlanet.radius;
+      // 디자인 기준 표면 + 14. 큰 행성은 자동 비행 도착 지점(표면 1.5r)이 14를 넘을 수 있어 2r 과 비교한다
+      if (surface <= Math.max(PANEL_CLOSE_DISTANCE, 2 * panelPlanet.radius)) this.panelNear = true;
+      else if (this.panelNear && s.camera === "flight") {
+        this.panelNear = false;
+        s.closePanel();
+      }
+    } else if (!s.selectedPlanetId) {
+      this.panelNear = false;
     }
     const showNear = s.camera !== "overview" && !this.flight && near !== s.selectedPlanetId ? near : null;
     if (sceneState.getState().nearPlanetId !== showNear) sceneState.setState({ nearPlanetId: showNear });
@@ -315,6 +344,12 @@ export class UniverseScene {
     this.player.animate(dt, this.t, this.vel, this.vel.length() / MAX_SPEED, reduced);
     this.cam.update(dt, s.camera, pos);
     this.renderer.render(this.scene, this.cam.camera);
+    this.frames++;
+    if (this.t - this.fpsSince >= 1) {
+      sceneState.setState({ fps: Math.round(this.frames / (this.t - this.fpsSince)) });
+      this.frames = 0;
+      this.fpsSince = this.t;
+    }
     this.raf = requestAnimationFrame(this.step);
   };
 

@@ -82,10 +82,18 @@ describe("store 계약", () => {
     const seen: string[] = [];
     s.getState().registerFlyToPlanet(async (id) => {
       seen.push(`${id}:${s.getState().camera}`);
+      return true;
     });
-    await s.getState().flyToPlanet("b", "openPanel");
+    assert.equal(await s.getState().flyToPlanet("b", "openPanel"), true);
     assert.deepEqual(seen, ["b:flyingTo"]);
     has(s.getState(), { selectedPlanetId: "b", camera: "landed" });
+  });
+
+  it("flyToPlanet: 이동 키로 자동 비행을 멈추면 패널을 열지 않는다 (DESIGN 9-4)", async () => {
+    s.getState().closePanel();
+    s.getState().registerFlyToPlanet(async () => false);
+    assert.equal(await s.getState().flyToPlanet("a", "openPanel"), false);
+    has(s.getState(), { selectedPlanetId: null, camera: "flight" });
   });
 
   it("addToCargo 는 같은 항목을 두 번 넣지 않는다", () => {
