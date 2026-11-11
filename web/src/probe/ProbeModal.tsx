@@ -7,13 +7,13 @@ import { Banner } from "../ui/Banner.tsx";
 import { Button } from "../ui/Button.tsx";
 import { Modal } from "../ui/Modal.tsx";
 import { cargoRow, hasUniverse, periodText } from "./cargoLabel.ts";
+import { availableFormats, effectiveFormat, isMcpHidden } from "./formats.ts";
 import "./probe.css";
 
 const PREVIEW_DELAY_MS = 250;
-const FORMATS: { value: ExportFormat; label: string; hint: string }[] = [
-  { value: "claude", label: "Claude 프롬프트", hint: "정리된 텍스트" },
-  { value: "mcp", label: "MCP 리소스", hint: "JSON" },
-];
+/** 축소 플래그 (VITE_HIDE_MCP=1): MCP 리소스 라디오를 숨긴다 */
+const HIDE_MCP = isMcpHidden(import.meta.env);
+const FORMATS = availableFormats(HIDE_MCP);
 
 type Preview =
   | { state: "empty" }
@@ -24,7 +24,7 @@ type Preview =
 export function ProbeModal() {
   const open = useStore((s) => s.route.name === "probe");
   const cargo = useStore((s) => s.cargo);
-  const format = useStore((s) => s.exportFormat);
+  const format = effectiveFormat(useStore((s) => s.exportFormat), HIDE_MCP);
   const preview = useExportPreview(open, format);
   const [manualCopy, setManualCopy] = useState(false);
 
