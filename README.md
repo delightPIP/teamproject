@@ -133,6 +133,7 @@ docs/               # 기획 문서
 | [docs/adr/](docs/adr/) | 기술 결정 기록 (0001 수집 앱·서버 스택, 0002 웹 스택) |
 | [docs/INTERVIEW.md](docs/INTERVIEW.md) | 사용자 인터뷰 가이드: 대상, 질문, 판정 기준 |
 | [docs/DEMO.md](docs/DEMO.md) | 데모 시나리오, 인수 기준, 성공 기준 측정 방법 |
+| [docs/DESIGN-REVIEW.md](docs/DESIGN-REVIEW.md) | 우주 표현 방식(Q7) 시안 검수 기준·절차·기한 |
 | [GitHub Issues](https://github.com/delightPIP/teamproject/issues) | 작업 이슈 #1~#10 (이슈 1개 = 빅 피처 1개) |
 
 ---
@@ -140,7 +141,7 @@ docs/               # 기획 문서
 ## 📌 팀 협업 파이프라인
 1. `/setup` ➔ 2. `/prd` ➔ 3. `/toPolicy` ➔ 4. `/toSpec` ➔ 5. `/toIssue` ➔ 6. `/impl` ➔ 7. `/pr`
 
-현재 5단계(`/toIssue`)까지 끝났다. 이슈 #1~#10이 등록되어 있고, 다음은 각자 이슈를 받아 `/impl`로 구현한다. #1 공통 타입·API 목업은 머지됐다 (PR #13). Q3 스택은 Electron으로 채택됐다 (PR #15). 남은 1일 차 선행 작업은 Q9 확정(개발 B·C)이다.
+현재 5단계(`/toIssue`)까지 끝났다. 이슈 #1~#10이 등록되어 있고, 다음은 각자 이슈를 받아 `/impl`로 구현한다. #1 공통 타입·API 목업은 머지됐다 (PR #13). Q3 스택은 Electron으로 채택됐다 (PR #15). 남은 1일 차 선행 작업은 Q9 확정(개발 B·C)이다. Q7(우주 표현 방식)은 시안이 아직 없어 결정을 못 했고, 대신 검수 기준·절차와 기한(제안)을 [docs/DESIGN-REVIEW.md](docs/DESIGN-REVIEW.md)에 먼저 정했다.
 
 ## 🛡️ Git 3대 수칙 (충돌 방지 자동화)
 1. **브랜치 시작 전**: 항상 최신 main 당겨오기
