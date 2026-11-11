@@ -2,6 +2,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { apiError, ERROR_STATUS, type ErrorCode } from "@spacelog/shared/errors";
 import type { ServerConfig } from "./config.ts";
+import { RouteError } from "./http/routeError.ts";
 import { checkRequest } from "./security.ts";
 import { serveStatic } from "./static.ts";
 
@@ -47,6 +48,11 @@ export function createHandler(config: ServerConfig, getPort: () => number) {
       if ((method === "GET" || method === "HEAD") && config.webDir && (await serveStatic(config.webDir, path, method, res))) return;
       sendError(res, "NOT_FOUND");
     } catch (err) {
+      if (err instanceof RouteError && !res.headersSent) {
+        if (err.code) return sendError(res, err.code);
+        res.writeHead(err.status).end(); // 17종에 없는 잘못된 요청: 본문 없이 상태만
+        return;
+      }
       console.error("[server]", method, path, err);
       // 17종 코드에 없는 실패라 본문 없이 500. 웹은 "UNKNOWN"으로 처리한다 (web/src/api/client.ts)
       if (!res.headersSent) res.writeHead(500).end();
