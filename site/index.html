@@ -112,12 +112,14 @@
       <div class="card">
         <p class="label">세 줄이면 됩니다</p>
         <pre><code>git clone https://github.com/delightPIP/teamproject.git
-cd teamproject &amp;&amp; npm install
-npm start -w @spacelog/collector</code></pre>
+cd teamproject/apps/collector
+npm install &amp;&amp; npm start</code></pre>
         <div class="notice">
           수집 앱이 켜지면 로컬 서버도 같이 뜨고, 트레이 아이콘의 <b>“우주 보기”</b>를 누르면
           기본 브라우저에서 내 우주가 열립니다. 서버는 <code>127.0.0.1</code>에만 열리고
           실행할 때마다 새 토큰을 만들어서, 다른 웹페이지는 접근하지 못합니다.
+          우주 화면까지 보려면 저장소 안에서 <code>web</code>을 한 번 빌드해 두세요
+          (<code>npm install &amp;&amp; npm run build -w @spacelog/web</code>).
         </div>
       </div>
     </section>
