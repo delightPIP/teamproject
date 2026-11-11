@@ -15,6 +15,9 @@ const starFiles = Object.values(import.meta.glob("../../../mocks/api/stars/*.jso
 const empty = new URLSearchParams(location.hash.split("?")[1]).get("mock") === "empty";
 const data = (empty ? universeEmpty : universe) as unknown as UniverseResponse;
 
+/** 목업에서 받은 재발견 이벤트 (개발 중 확인용) */
+export const mockRediscoveryEvents: unknown[] = [];
+
 /** 목업의 가상 "오늘" (mocks/api/README.md) */
 const MOCK_NOW = new Date("2026-11-11T12:00:00+09:00");
 
@@ -33,6 +36,11 @@ export async function mockApi(method: string, path: string, body?: unknown): Pro
     // 서버와 같은 생성 로직 (apps/server/export). 목업에는 원본 파일이 없어 .md 본문은 비어 있다
     const { items, format } = body as ExportRequest;
     return buildExport(items, format, { stars: data.stars, planets: data.planets, now: MOCK_NOW });
+  }
+  if (method === "POST" && url.pathname === "/api/rediscovery/events") {
+    mockRediscoveryEvents.push(body);
+    console.info("[mock] 재발견 이벤트", body);
+    return null;
   }
   if (method === "GET" && url.pathname === "/api/rediscovery/today") return empty ? null : rediscoveryToday;
   throw new RequestError("NOT_FOUND", `${ERROR_MESSAGES.NOT_FOUND} (목업에 없는 API: ${method} ${url.pathname})`, 404);

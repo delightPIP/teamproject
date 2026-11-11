@@ -5,6 +5,7 @@ import { getToken, saveToken, setApiListeners, setMock } from "./api/client.ts";
 import { App } from "./App.tsx";
 import { parseHash, takeToken } from "./router.ts";
 import { store } from "./state/store.ts";
+import { handleRediscoveryDeepLink } from "./rediscovery/rediscovery.ts";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./ui/ui.css";
@@ -37,6 +38,9 @@ if (!getToken()) {
 } else {
   s.setAuth("ok");
   s.loadInitial().then(() => {
+    // 재발견 알림이 연 주소면 기간 맞추기 → 행성 이동 → 별 상세 (개발 A, #7)
+    const { route, params } = parseHash(location.hash);
+    void handleRediscoveryDeepLink(route.name === "star" ? route.id : null, params);
     window.addEventListener("focus", () => {
       if (store.getState().auth === "ok") void store.getState().refresh();
     });
