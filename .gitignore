@@ -1,4 +1,16 @@
+# [Team Rules] 필수 보안 및 환경설정
+.env
+.env.local
+*.key
+__pycache__/
+*.py[cod]
+venv/
+.venv/
 node_modules/
 dist/
+.DS_Store
+Thumbs.db
+
+# [SpaceLog] POLICY 1-2: .env* 는 커밋 금지, .env.example 만 허용
 .env*
 !.env.example
