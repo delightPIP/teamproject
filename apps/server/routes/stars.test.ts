@@ -86,6 +86,24 @@ describe("POST /api/stars", () => {
     assert.deepEqual(empty.json.rejected.map((r) => r.code), ["TEXT_EMPTY"]);
   });
 
+  it("GET /api/stars/:id: 별 하나(localDate 포함), 없으면 404 NOT_FOUND", async () => {
+    const { json } = await post({ kind: "text", text: "재발견 딥링크로 열 별" });
+    const id = json.created[0].id;
+    const get = (path: string) => fetch(`http://127.0.0.1:${port}${path}`, { headers: { "x-session-token": TOKEN } });
+
+    const ok = await get(`/api/stars/${encodeURIComponent(id)}`);
+    assert.equal(ok.status, 200);
+    const star = await ok.json();
+    assert.equal(star.id, id);
+    assert.equal(star.textBody, "재발견 딥링크로 열 별");
+    assert.equal(star.localDate, "2026-11-11");
+    assert.equal(star.originalMissing, false);
+
+    const missing = await get("/api/stars/no-such-star");
+    assert.equal(missing.status, 404);
+    assert.equal((await missing.json()).error.code, "NOT_FOUND");
+  });
+
   it(`${MAX_TEXT_CHARS.toLocaleString()}자 넘는 텍스트는 .txt 파일 기록`, async () => {
     const { json } = await post({ kind: "text", text: "가".repeat(MAX_TEXT_CHARS + 1) });
     const s = json.created[0];
