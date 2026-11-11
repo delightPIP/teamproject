@@ -260,7 +260,7 @@ footer{color:var(--muted);font-size:13px}
       </table></div>
       <h4>규칙</h4>
       <ul class="plain"><li>하루 1회. S-04에서 끌 수 있다.</li><li>"7일 전"은 기록을 넣은 시각 기준.</li><li>같은 별은 다시 고르지 않는다 (개발 A 규칙).</li></ul>
-      <div class="callout"><h3>미정</h3><p>7일 전에 넣은 기록이 없는 날의 대체 규칙 (예: 가장 가까운 이전 날짜, 또는 알림 생략). 담당 개발 A.</p></div>
+      <div class="callout"><h3>정함 (SQ1, 2026-11-11)</h3><p>7일 전 기록이 없으면 14일 전, 그다음 30일 전 순서로 찾는다. 셋 다 없으면 그날은 알림과 카드를 띄우지 않는다 (SPEC 3-6, POLICY 2-2). 담당 개발 A.</p></div>
     </div>
   </div>
 </section>
@@ -413,12 +413,20 @@ footer{color:var(--muted);font-size:13px}
       <div class="box solid"><span class="num">1</span><div class="row"><b style="color:var(--ink)">실은 기록 3</b><span class="grow"></span><span class="btn">이 기간 우주 전체 싣기</span></div>
         <div class="row"><span class="chip">경쟁사 온보딩 링크 ✕</span><span class="chip">요구사항 초안.pdf ✕</span><span class="chip">생각 조각 행성 ✕</span></div></div>
       <div class="row" style="position:relative"><span class="num" style="top:-9px;left:-9px">2</span><span class="btn primary">Claude 프롬프트</span><span class="btn">MCP 리소스</span></div>
-      <div class="box solid"><span class="num">3</span><pre>## 내 기록 묶음 (2026-11-11, 3개)
-### 제품 기획
-- 경쟁사 온보딩 링크 — 메모: …
-- 요구사항 초안.pdf — 메모: …
-### 생각 조각
-- …</pre></div>
+      <div class="box solid"><span class="num">3</span><pre>아래는 내가 2026.11.11에 모아 둔 자료 3개야. 행성(카테고리)별로 정리돼 있어.
+&lt;archive period="2026.11.11" count="3"&gt;
+&lt;planet name="업무"&gt;
+&lt;record kind="link" date="2026.11.11 10:12"&gt;
+제목: notion.so
+URL: https://notion.so/…
+메모: …
+&lt;/record&gt;
+&lt;record kind="file" date="2026.11.11 11:05"&gt;
+파일: 요구사항 초안.pdf (application/pdf)
+&lt;/record&gt;
+&lt;/planet&gt;
+…
+&lt;/archive&gt;</pre></div>
       <div class="row"><span class="grow" style="position:relative"><span class="num" style="top:-9px;left:-9px">4</span>고른 것만 복사돼요. 자동으로 보내지 않아요.</span><span class="btn primary" style="position:relative"><span class="num" style="top:-12px;left:-12px">5</span>복사하기</span></div>
     </div>
     <div class="sub">
@@ -433,7 +441,7 @@ footer{color:var(--muted);font-size:13px}
           <tr><td><span class="num">5</span></td><td>복사하기</td><td>클립보드에 복사하고 "복사했어요. Claude에 붙여넣으세요"를 띄운다. 1분 안에 끝나야 한다 (성공 기준).</td></tr>
         </tbody>
       </table></div>
-      <div class="callout"><h3>미정</h3><p>이미지·파일 기록을 텍스트 형식에 어떻게 담을지 (파일 이름과 메모만 / 원본 경로 포함 / 따로 첨부 안내). 담당 개발 A, 결정 PO.</p></div>
+      <div class="callout"><h3>구현 기준 (SQ2, PO 확정 대기)</h3><p>이미지·파일은 <b>파일 이름과 종류(MIME)와 메모</b>만 담는다. 원본 경로는 넣지 않는다(POLICY 2-8: 경로에 사용자 이름이 들어간다). <code>.txt</code>·<code>.md</code>는 본문을 20,000자까지 넣는다. 미리보기 예시는 SPEC 3-8의 Claude 프롬프트 형식이다.</p></div>
     </div>
   </div>
 </section>
@@ -458,8 +466,8 @@ footer{color:var(--muted);font-size:13px}
   <div class="scroll"><table>
     <thead><tr><th>#</th><th>질문</th><th>화면</th><th>담당</th></tr></thead>
     <tbody>
-      <tr><td class="id">SQ1</td><td>7일 전 기록이 없는 날의 재발견 대체 규칙</td><td>S-03, W-01</td><td>개발 A</td></tr>
-      <tr><td class="id">SQ2</td><td>이미지·파일 기록을 탐사선 텍스트에 담는 방식</td><td>W-04</td><td>개발 A · 결정 PO</td></tr>
+      <tr><td class="id">SQ1</td><td>7일 전 기록이 없는 날의 재발견 대체 규칙 → <b>정함</b>: 14일 전 → 30일 전, 없으면 그날은 띄우지 않음</td><td>S-03, W-01</td><td>개발 A</td></tr>
+      <tr><td class="id">SQ2</td><td>이미지·파일 기록을 탐사선 텍스트에 담는 방식 → <b>구현 기준</b>: 이름·종류·메모만, 경로 없음 (PO 확정 대기)</td><td>W-04</td><td>개발 A · 결정 PO</td></tr>
       <tr><td class="id">SQ3</td><td>드롭존이 붙는 위치(좌·우·상단)와 접힌 모양, 맥 메뉴바와 윈도우 트레이의 차이</td><td>S-01</td><td>디자이너 2 · PO</td></tr>
       <tr><td class="id">SQ4</td><td>비행 중 패널이 열려 있을 때 비행 키를 막을지</td><td>W-01, W-02</td><td>개발 C · 디자이너 1</td></tr>
       <tr><td class="id">SQ5</td><td>행성 배정 규칙(Q1)에 따라 S-02의 "바꾸기" 목록 순서</td><td>S-02</td><td>개발 B</td></tr>
