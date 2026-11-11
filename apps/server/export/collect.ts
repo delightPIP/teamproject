@@ -1,7 +1,7 @@
 // 탐사선 cargo → 내보내기 기록 목록 (SPEC 3-8, POLICY 2-8).
 // 절대 경로·storagePath는 절대 결과에 넣지 않는다.
-import type { CargoItem, Period, Planet, Star, StarKind } from "../_tmp/sharedTypes.ts";
-import { toLocalDate, toLocalDateTime } from "../_tmp/localDate.ts";
+import type { CargoItem, Planet, Star, StarKind } from "@spacelog/shared/types";
+import { inPeriod, localDate } from "@spacelog/shared/period";
 
 export const FILE_TEXT_LIMIT = 20_000;
 export const TRUNCATION_MARK = "…(이하 생략)";
@@ -26,7 +26,7 @@ export interface ExportRecord {
 export interface CollectContext {
   stars: readonly Star[];
   planets: readonly Planet[];
-  timeZone: string;
+  now?: Date; // 현지 날짜 기준 시각 (기본: 지금)
   /** .txt·.md 원본 본문을 읽어 준다. 없거나 실패하면 null. */
   readFileText?: (star: Star) => string | null;
 }
@@ -40,7 +40,13 @@ export function truncate(text: string, limit = FILE_TEXT_LIMIT): string {
   return text.length > limit ? text.slice(0, limit) + TRUNCATION_MARK : text;
 }
 
-const inPeriod = (date: string, period: Period) => date >= period.from && date <= period.to;
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** 현지 "YYYY.MM.DD HH:mm" */
+export function localDateTime(utcIso: string): string {
+  const d = new Date(utcIso);
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function resolveStarIds(items: readonly CargoItem[], ctx: CollectContext): Set<string> {
   const ids = new Set<string>();
@@ -52,7 +58,7 @@ function resolveStarIds(items: readonly CargoItem[], ctx: CollectContext): Set<s
     }
     for (const star of ctx.stars) {
       if (item.type === "planet" && star.planetId !== item.planetId) continue;
-      if (inPeriod(toLocalDate(star.createdAtUtc, ctx.timeZone), item.period)) ids.add(star.id);
+      if (inPeriod(star.createdAtUtc, item.period, ctx.now)) ids.add(star.id);
     }
   }
   return ids;
@@ -66,8 +72,8 @@ function toRecord(star: Star, planetName: string, ctx: CollectContext): ExportRe
     id: star.id,
     kind: star.kind,
     planetName,
-    localDate: toLocalDate(star.createdAtUtc, ctx.timeZone),
-    dateTime: toLocalDateTime(star.createdAtUtc, ctx.timeZone),
+    localDate: localDate(star.createdAtUtc, ctx.now),
+    dateTime: localDateTime(star.createdAtUtc),
     createdAtUtc: star.createdAtUtc,
     memo: star.memo?.trim() ? star.memo : null,
     textBody: body == null ? null : fileText != null ? truncate(body) : body,

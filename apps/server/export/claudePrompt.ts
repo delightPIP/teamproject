@@ -1,6 +1,7 @@
 // Claude 프롬프트 형식 (SPEC 3-8 초안). 구조·안내 문구는 개발 A가 확정한다.
-import { dotDate } from "../_tmp/localDate.ts";
 import type { ExportRecord } from "./collect.ts";
+
+const dotDate = (localDate: string) => localDate.replaceAll("-", ".");
 
 /** 사용자 글 안의 닫는 태그가 구조를 깨지 않게 막는다. */
 const guard = (text: string) => text.replace(/<\/(archive|planet|record)/gi, "<\\/$1");

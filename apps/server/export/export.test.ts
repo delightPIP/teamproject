@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { Period, Planet, Star } from "../_tmp/sharedTypes.ts";
+import type { Period, Planet, Star } from "@spacelog/shared/types";
 import { collect, FILE_TEXT_LIMIT, TRUNCATION_MARK, UNNAMED } from "./collect.ts";
 import { buildExport, EXPORT_CHAR_LIMIT } from "./buildExport.ts";
 
-const TZ = "Asia/Seoul";
+// 결과가 실행하는 PC 시간대에 따라 달라지지 않게 고정한다
+process.env.TZ = "Asia/Seoul";
+const NOW = new Date("2026-11-11T12:00:00Z");
 const WEEK: Period = { preset: "custom", from: "2026-11-04", to: "2026-11-11" };
 
 const planets: Planet[] = [
@@ -36,7 +38,7 @@ const pdf = makeStar({
 });
 const old = makeStar({ id: "s-old", kind: "text", planetId: "p-memo", createdAtUtc: "2026-10-01T00:00:00Z", textBody: "기간 밖" });
 const stars = [link, memo, pdf, old];
-const ctx = { stars, planets, timeZone: TZ };
+const ctx = { stars, planets, now: NOW };
 
 test("universe는 기간 안의 별만, 행성 순 → 시각 순으로 펼친다", () => {
   const ids = collect([{ type: "universe", period: WEEK }], ctx).map((r) => r.id);
