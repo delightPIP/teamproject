@@ -80,9 +80,9 @@ flowchart LR
 | 영역 | 후보 | 상태 |
 | --- | --- | --- |
 | 수집 앱 + 로컬 서버 (Q3) | **Electron + TypeScript 서버** 제안 ([ADR 0001](docs/adr/0001-collector-server-stack.md)) | 윈도우 스파이크 측정 완료, 맥 측정과 개발 B 확인 후 채택 |
-| 웹 + 우주 렌더링 (Q9) | Vite + Three.js (가정, 3D안·2.5D안 모두 가능) | 개발 B·C, Q7 결정 후 |
+| 웹 + 우주 렌더링 (Q9) | [ADR 0002](docs/adr/0002-web-stack.md) 초안 (개발 B) | 개발 B·C가 1주 차 초에 확정, Q7 결정에 맞춤 |
 
-### 폴더 구성 (SPEC 제안, 잠정)
+### 폴더 구성 (SPEC 제안 · `packages/shared`, `mocks/api`는 #1로 들어옴)
 
 ```
 apps/collector/     # 수집 앱 (PO)
@@ -130,7 +130,7 @@ docs/               # 기획 문서
 | [docs/PRD.md](docs/PRD.md) | 기획서: 문제, 목표, 범위, 저니, 오너십, 열린 질문 |
 | [docs/POLICY.md](docs/POLICY.md) | 정책서: 보안, 비즈니스 규칙, 예외 처리 |
 | [docs/SPEC.md](docs/SPEC.md) | 스펙서: 화면, 데이터 모델, API, 흐름, 폴더 구성 |
-| [docs/adr/](docs/adr/) | 기술 결정 기록 (0001: 수집 앱·서버 스택) |
+| [docs/adr/](docs/adr/) | 기술 결정 기록 (0001 수집 앱·서버 스택, 0002 웹 스택) |
 | [docs/INTERVIEW.md](docs/INTERVIEW.md) | 사용자 인터뷰 가이드: 대상, 질문, 판정 기준 |
 | [docs/DEMO.md](docs/DEMO.md) | 데모 시나리오, 인수 기준, 성공 기준 측정 방법 |
 | [GitHub Issues](https://github.com/delightPIP/teamproject/issues) | 작업 이슈 #1~#10 (이슈 1개 = 빅 피처 1개) |
@@ -140,7 +140,7 @@ docs/               # 기획 문서
 ## 📌 팀 협업 파이프라인
 1. `/setup` ➔ 2. `/prd` ➔ 3. `/toPolicy` ➔ 4. `/toSpec` ➔ 5. `/toIssue` ➔ 6. `/impl` ➔ 7. `/pr`
 
-현재 5단계(`/toIssue`)까지 끝났다. 이슈 #1~#10이 등록되어 있고, 다음은 각자 이슈를 받아 `/impl`로 구현한다. 1일 차에 먼저 끝내야 하는 것은 #1 공통 타입·API 목업(개발 B)과 Q3 스택 확정(PO·개발 B)이다.
+현재 5단계(`/toIssue`)까지 끝났다. 이슈 #1~#10이 등록되어 있고, 다음은 각자 이슈를 받아 `/impl`로 구현한다. #1 공통 타입·API 목업은 머지됐다 (PR #13). 남은 1일 차 선행 작업은 Q3 스택 확정(PO·개발 B)과 Q9 확정(개발 B·C)이다.
 
 ## 🛡️ Git 3대 수칙 (충돌 방지 자동화)
 1. **브랜치 시작 전**: 항상 최신 main 당겨오기
