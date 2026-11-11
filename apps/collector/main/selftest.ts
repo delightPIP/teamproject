@@ -6,6 +6,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
 import path from "node:path";
 import type { Ingest } from "./ingest.ts";
+import { localDateOf } from "./notifySchedule.ts";
 import type { ServerProcess } from "./serverProcess.ts";
 
 function raw(port: number, headers: Record<string, string>): Promise<number | string> {
@@ -17,6 +18,16 @@ function raw(port: number, headers: Record<string, string>): Promise<number | st
     req.on("error", (e) => resolve(`ERR ${(e as NodeJS.ErrnoException).code}`));
     req.end();
   });
+}
+
+/** 토큰을 붙여 서버에서 JSON을 읽는다 (자가검증용) */
+async function getJson(port: number, token: string, p: string): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}${p}`, { headers: { "x-session-token": token } });
+    return res.ok ? ((await res.json()) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function runSelfTest(server: ServerProcess, ingest: Ingest): Promise<Record<string, unknown>> {
@@ -58,8 +69,16 @@ export async function runSelfTest(server: ServerProcess, ingest: Ingest): Promis
   results.text = { kind: text.stars[0]?.kind, pass: text.stars[0]?.kind === "text" };
   const empty = await ingest.saveText("", "   ", "paste");
   results.empty = { lines: empty.lines, pass: empty.stars.length === 0 && empty.lines[0] === "클립보드가 비어 있어요" };
-  const conf = await ingest.confirm({ ids: [text.stars[0]?.id ?? "x"], planetId: "p-idea", memo: "메모\n두 줄" + "가".repeat(200) });
-  results.confirm = { ...conf, pass: conf.ok };
+  // 행성 id는 서버에서 읽어 쓴다. 전에는 가짜 서버에만 있는 "p-idea"를 보내 실서버에서 늘 NOT_FOUND였다
+  const ymd = localDateOf(new Date());
+  const universe = await getJson(port, server.token, `/api/universe?from=${ymd}&to=${ymd}`);
+  const planets = (universe?.planets as { id: string }[] | undefined) ?? [];
+  const current = text.stars[0]?.planetId;
+  const target = planets.find((p) => p.id !== current)?.id ?? current;
+  const conf = target
+    ? await ingest.confirm({ ids: [text.stars[0]?.id ?? "x"], planetId: target, memo: "메모\n두 줄" + "가".repeat(200) })
+    : { ok: false, error: "행성을 읽지 못했어요" };
+  results.confirm = { ...conf, planetId: target ?? null, pass: conf.ok };
   clipboard.writeText("단축키 자가검증");
   const sc = await ingest.saveClipboard();
   results.shortcut = { kind: sc.stars[0]?.kind, error: sc.error, lines: sc.lines, pass: sc.stars[0]?.kind === "text" };
