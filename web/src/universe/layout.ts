@@ -1,15 +1,31 @@
 // 우주 배치 계산 (SPEC 3-5, POLICY 2-5). Three.js 없이 숫자만 다뤄 테스트할 수 있게 둔다.
 
-/** 행성 기본 반지름. 크기는 base ~ 4·base */
-export const PLANET_BASE = 2.5;
+/** 행성 기본 반지름 범위 (DESIGN.md 8장). 행성마다 id 로 이 안에서 고정 */
+export const PLANET_MIN_R = 3.6;
+export const PLANET_MAX_R = 6;
+/** 기간 안 별 1개마다 커지는 비율 (DESIGN.md 8장 "+3.5%") */
+export const PLANET_GROWTH = 0.035;
+/**
+ * 이 개수부터는 더 커지지 않는다. 문서에 상한이 없어 별 2,000개면 71배가 되므로 M5(행성당 별 최근 50개)에 맞춰 둔다.
+ * shortcut: 디자이너 확인 전 임시값 (S1 · M5)
+ */
+export const PLANET_GROWTH_CAP = 50;
 /** 기간 안 별이 이보다 많으면 별은 그리지 않는다 (POLICY 3-4, 잠정) */
 export const STAR_LIMIT = 2000;
 
-/** r = base × (1 + log2(1 + n)), base ≤ r ≤ 4·base. n = 0 이면 그리지 않으므로 0 */
-export function planetRadius(n: number, base = PLANET_BASE): number {
-  if (n <= 0) return 0;
-  return Math.min(4 * base, Math.max(base, base * (1 + Math.log2(1 + n))));
+/** 행성 기본 반지름 3.6 ~ 6. 같은 행성은 늘 같은 값 */
+export function planetBaseRadius(planetId: string): number {
+  return PLANET_MIN_R + seeded(`${planetId}:radius`)() * (PLANET_MAX_R - PLANET_MIN_R);
 }
+
+/** 기본 반지름 × (1 + 3.5% × 별 개수). 0개면 그리지 않으므로 0 (S1 → DESIGN.md 8장) */
+export function planetRadius(n: number, base: number): number {
+  if (n <= 0) return 0;
+  return base * (1 + PLANET_GROWTH * Math.min(n, PLANET_GROWTH_CAP));
+}
+
+/** 가장 커졌을 때의 반지름 */
+export const PLANET_LARGEST_R = PLANET_MAX_R * (1 + PLANET_GROWTH * PLANET_GROWTH_CAP);
 
 /** 문자열 → 32비트 해시 (FNV-1a). 같은 id 는 늘 같은 값 */
 export function hash32(s: string): number {
@@ -34,7 +50,7 @@ export function seeded(id: string): () => number {
 
 export type Vec3 = [number, number, number];
 
-const MIN_GAP = 4 * PLANET_BASE * 2 + 6; // 가장 큰 행성 둘이 겹치지 않을 거리
+const MIN_GAP = PLANET_LARGEST_R * 2 + 6; // 가장 큰 행성 둘이 겹치지 않을 거리
 
 /**
  * 행성 위치. 원판 위에 id 시드로 흩뿌리고, 먼저 만든 행성과 너무 가까우면 바깥으로 민다.

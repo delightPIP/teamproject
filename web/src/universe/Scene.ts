@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import { store, type Store } from "../state/store.ts";
 import { CameraController } from "./CameraController.ts";
-import { planetPositions, planetRadius, PLANET_BASE, STAR_LIMIT } from "./layout.ts";
+import { planetBaseRadius, planetPositions, planetRadius, PLANET_MIN_R, STAR_LIMIT } from "./layout.ts";
 import { PlanetView } from "./Planet.ts";
 import { landOn } from "./land.ts";
 import { Player } from "./Player.ts";
@@ -34,6 +34,8 @@ export class UniverseScene {
   private drag: { x: number; y: number; sx: number; sy: number } | null = null;
   private raf = 0;
   private t = 0;
+  private frames = 0;
+  private fpsSince = 0;
   /** 패널 행성 가까이에 한 번이라도 있었는지. 멀리서 연 패널(목록·딥링크)은 바로 닫지 않으려고 둔다 */
   private panelNear = false;
   private readonly cleanups: (() => void)[] = [];
@@ -106,7 +108,7 @@ export class UniverseScene {
         view.update(p);
         view.position.set(...positions.get(p.id)!);
       }
-      view.setTargetRadius(planetRadius(p.starCountInPeriod ?? 0));
+      view.setTargetRadius(planetRadius(p.starCountInPeriod ?? 0, planetBaseRadius(p.id)));
     }
     for (const [id, view] of this.planets) {
       if (alive.has(id)) continue;
@@ -116,7 +118,7 @@ export class UniverseScene {
     this.cam.frame(
       s.planets
         .filter((p) => (p.starCountInPeriod ?? 0) > 0)
-        .map((p) => ({ pos: positions.get(p.id)!, r: planetRadius(p.starCountInPeriod ?? 0) })),
+        .map((p) => ({ pos: positions.get(p.id)!, r: planetRadius(p.starCountInPeriod ?? 0, planetBaseRadius(p.id)) })),
     );
   }
 
@@ -137,7 +139,7 @@ export class UniverseScene {
     const view = this.planets.get(planetId);
     if (!view) return Promise.resolve();
     this.flight?.done();
-    const r = Math.max(view.radius, PLANET_BASE);
+    const r = Math.max(view.radius, PLANET_MIN_R);
     const from = this.player.root.position.clone();
     const dir = from.clone().sub(view.position);
     dir.y = Math.max(dir.y, 0);
@@ -331,6 +333,12 @@ export class UniverseScene {
     this.player.animate(dt, this.t, this.vel, this.vel.length() / MAX_SPEED, reduced);
     this.cam.update(dt, s.camera, pos);
     this.renderer.render(this.scene, this.cam.camera);
+    this.frames++;
+    if (this.t - this.fpsSince >= 1) {
+      sceneState.setState({ fps: Math.round(this.frames / (this.t - this.fpsSince)) });
+      this.frames = 0;
+      this.fpsSince = this.t;
+    }
     this.raf = requestAnimationFrame(this.step);
   };
 
