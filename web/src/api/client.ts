@@ -37,7 +37,7 @@ const currentToken = () => getToken() ?? memoryToken;
 export const NETWORK_MESSAGE = "수집 앱이 꺼져 있거나 응답하지 않아요"; // SPEC 3-4
 const UNKNOWN_MESSAGE = "문제가 생겼어요. 잠시 후 다시 시도해 주세요";
 
-/** API 요청 실패. code 는 shared 오류 코드 17종 또는 웹 전용 "NETWORK" · "UNKNOWN" */
+/** API 요청 실패. code 는 shared 오류 코드 18종 또는 웹 전용 "NETWORK" · "UNKNOWN" */
 export class RequestError extends Error {
   code: ErrorCode | "NETWORK" | "UNKNOWN";
   status: number;

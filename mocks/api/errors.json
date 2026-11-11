@@ -100,5 +100,11 @@
       "code": "NOT_FOUND",
       "message": "찾는 기록이 없어요"
     }
+  },
+  {
+    "error": {
+      "code": "INVALID_REQUEST",
+      "message": "요청 형식이 올바르지 않아요"
+    }
   }
 ]
