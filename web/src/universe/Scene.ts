@@ -6,6 +6,7 @@ import { store, type Store } from "../state/store.ts";
 import { CameraController } from "./CameraController.ts";
 import { planetPositions, planetRadius, PLANET_BASE, STAR_LIMIT } from "./layout.ts";
 import { PlanetView } from "./Planet.ts";
+import { landOn } from "./land.ts";
 import { Player } from "./Player.ts";
 import { sceneState } from "./sceneState.ts";
 import { StarsView } from "./Stars.ts";
@@ -173,6 +174,8 @@ export class UniverseScene {
 
     on(window, "keydown", (e) => {
       if (isTyping(e) || document.querySelector("dialog[open]")) return;
+      // 버튼·링크에 포커스가 있으면 Space 는 그 버튼을 누르는 키다 (키보드 접근성)
+      if (e.code === "Space" && e.target instanceof Element && e.target.closest("button, a[href], [role='button']")) return;
       if (MOVE_KEYS.has(e.code)) {
         if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
         if (this.flight) return; // 자동 비행 중에는 조작을 받지 않는다
@@ -236,10 +239,7 @@ export class UniverseScene {
   /** E: 가까운 행성에 착륙 → 패널 */
   private land(): void {
     const id = sceneState.getState().nearPlanetId;
-    if (!id) return;
-    const s = store.getState();
-    s.openPanel(id);
-    s.setCamera("landed");
+    if (id) landOn(id);
   }
 
   private resize(): void {
