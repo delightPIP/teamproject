@@ -12,6 +12,7 @@ import { store, useStore } from "./state/store.ts";
 import { Button } from "./ui/Button.tsx";
 import { SidePanel } from "./ui/SidePanel.tsx";
 import { ToastHost } from "./ui/Toast.tsx";
+import { PerfMeter } from "./universe/PerfMeter.tsx";
 import { UniverseCanvas } from "./universe/UniverseCanvas.tsx";
 import { ProbeModal } from "./probe/ProbeModal.tsx";
 
@@ -37,6 +38,7 @@ export function App() {
       <NearPrompt />
       <RediscoverySlot />
       <HomeBanner />
+      <PerfMeter />
       <PanelPlaceholder />
       <ProbeModal />
       <ToastHost />

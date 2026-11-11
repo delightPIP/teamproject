@@ -1,6 +1,6 @@
 // 웹 개발용 목업 (`npm run dev:mock`). 개발 B의 mocks/api JSON을 그대로 돌려준다.
 // 목업의 가상 "오늘"은 2026-11-11 이라 기간과 상관없이 같은 우주를 돌려준다 (mocks/api/README.md).
-// `#/?token=dev&mock=empty` 로 열면 기록 0건 우주를 돌려준다.
+// `#/?token=dev&mock=empty` 로 열면 기록 0건 우주, `&stars=2000` 이면 별 2,000개 우주 (성능 측정).
 import { ERROR_MESSAGES } from "@spacelog/shared/errors";
 import type { ExportRequest, Star, UniverseResponse } from "@spacelog/shared/types";
 import { buildExport } from "../../../apps/server/export/buildExport.ts";
@@ -12,8 +12,24 @@ import { RequestError } from "./client.ts";
 // JSON import 는 리터럴 타입이 넓혀져 있다. 형식은 mocks/api/mocks.test.ts 가 검사한다
 const starFiles = Object.values(import.meta.glob("../../../mocks/api/stars/*.json", { eager: true, import: "default" })) as Star[];
 
-const empty = new URLSearchParams(location.hash.split("?")[1]).get("mock") === "empty";
-const data = (empty ? universeEmpty : universe) as unknown as UniverseResponse;
+const params = new URLSearchParams(location.hash.split("?")[1]);
+const empty = params.get("mock") === "empty";
+const data = withStarCount((empty ? universeEmpty : universe) as unknown as UniverseResponse, Number(params.get("stars")) || 0);
+
+/** 성능 측정용: `&stars=2000` 이면 별 N개를 만들어 행성에 나눠 준다 */
+function withStarCount(u: UniverseResponse, n: number): UniverseResponse {
+  if (n <= 0 || u.stars.length === 0) return u;
+  const planets = u.planets.filter((p) => !p.system);
+  const stars = Array.from({ length: n }, (_, i) => ({
+    ...u.stars[i % u.stars.length],
+    id: `perf-${String(i).padStart(5, "0")}`,
+    planetId: planets[i % planets.length].id,
+  }));
+  return {
+    stars,
+    planets: u.planets.map((p) => ({ ...p, starCountInPeriod: stars.filter((s) => s.planetId === p.id).length })),
+  };
+}
 
 /** 목업에서 받은 재발견 이벤트 (개발 중 확인용) */
 export const mockRediscoveryEvents: unknown[] = [];

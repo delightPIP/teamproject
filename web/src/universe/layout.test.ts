@@ -1,14 +1,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { distance, overviewFrame, PLANET_BASE, planetPositions, planetRadius, starOrbit } from "./layout.ts";
+import { distance, overviewFrame, PLANET_LARGEST_R, PLANET_MAX_R, PLANET_MIN_R, planetBaseRadius, planetPositions, planetRadius, starOrbit } from "./layout.ts";
 
-describe("planetRadius (POLICY 2-5)", () => {
-  it("0개면 그리지 않고, 기본값 1배 ~ 4배 사이", () => {
-    assert.equal(planetRadius(0), 0);
-    assert.equal(planetRadius(1), PLANET_BASE * 2);
-    assert.equal(planetRadius(3), PLANET_BASE * 3);
-    assert.equal(planetRadius(7), PLANET_BASE * 4);
-    assert.equal(planetRadius(5000), PLANET_BASE * 4);
+describe("planetRadius (DESIGN.md 8장)", () => {
+  it("0개면 그리지 않고, 별 1개마다 3.5%씩 커지며 50개에서 멈춘다", () => {
+    assert.equal(planetRadius(0, 5), 0);
+    assert.equal(planetRadius(1, 4), 4 * 1.035);
+    assert.equal(planetRadius(10, 4), 4 * 1.35);
+    assert.equal(planetRadius(5000, 6), PLANET_LARGEST_R);
+  });
+  it("기본 반지름은 행성마다 3.6 ~ 6, 같은 행성은 같은 값", () => {
+    for (let i = 0; i < 200; i++) {
+      const r = planetBaseRadius(`p${i}`);
+      assert.ok(r >= PLANET_MIN_R && r <= PLANET_MAX_R);
+    }
+    assert.equal(planetBaseRadius("x"), planetBaseRadius("x"));
   });
 });
 
@@ -24,7 +30,7 @@ describe("planetPositions", () => {
   it("가장 큰 행성끼리도 겹치지 않는다", () => {
     const pos = [...planetPositions(planets).values()];
     for (let i = 0; i < pos.length; i++)
-      for (let j = i + 1; j < pos.length; j++) assert.ok(distance(pos[i], pos[j]) > 8 * PLANET_BASE, `${i}-${j}`);
+      for (let j = i + 1; j < pos.length; j++) assert.ok(distance(pos[i], pos[j]) > 2 * PLANET_LARGEST_R, `${i}-${j}`);
   });
 });
 
