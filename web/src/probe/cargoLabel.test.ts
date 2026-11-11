@@ -16,17 +16,17 @@ const star = (over: Partial<Star>): Star =>
 
 const planet = { id: "p1", name: "메모", system: null, defaultFor: null, colorToken: "planet-1", createdAtUtc: "" } as Planet;
 
-test("별 제목: 링크 제목 → 도메인 → 파일 이름 → 본문 첫 줄 순서", () => {
-  assert.equal(starTitle(star({ linkTitle: "제목", linkDomain: "a.com" })), "제목");
-  assert.equal(starTitle(star({ linkDomain: "a.com" })), "a.com");
-  assert.equal(starTitle(star({ originalName: "초안.pdf" })), "초안.pdf");
-  assert.equal(starTitle(star({ textBody: "첫 줄\n둘째 줄" })), "첫 줄");
+test("별 제목: 다른 화면과 같은 규칙 (POLICY 2-7, ui/starTitle)", () => {
+  assert.equal(starTitle(star({ kind: "link", linkTitle: "제목", linkDomain: "a.com" })), "제목");
+  assert.equal(starTitle(star({ kind: "link", linkDomain: "a.com" })), "a.com");
+  assert.equal(starTitle(star({ kind: "file", originalName: "초안.pdf" })), "초안.pdf");
+  assert.equal(starTitle(star({ textBody: "첫 줄\n둘째 줄" })), "첫 줄 둘째 줄");
   assert.equal(starTitle(star({ textBody: "   " })), UNNAMED_STAR);
   assert.equal(starTitle(undefined), UNNAMED_STAR);
 });
 
-test("긴 제목은 40자에서 자른다", () => {
-  assert.equal(starTitle(star({ textBody: "가".repeat(50) })), `${"가".repeat(40)}…`);
+test("긴 텍스트는 30자에서 자른다 (재발견 카드와 같음)", () => {
+  assert.equal(starTitle(star({ textBody: "가".repeat(50) })), `${"가".repeat(30)}…`);
 });
 
 test("기간 표시: 하루면 날짜 하나, 아니면 범위", () => {
