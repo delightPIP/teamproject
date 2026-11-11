@@ -9,10 +9,10 @@ import { TopBar } from "./home/TopBar.tsx";
 import "./home/home.css";
 import { store, useStore } from "./state/store.ts";
 import { Button } from "./ui/Button.tsx";
-import { Modal } from "./ui/Modal.tsx";
 import { SidePanel } from "./ui/SidePanel.tsx";
 import { ToastHost } from "./ui/Toast.tsx";
 import { UniverseCanvas } from "./universe/UniverseCanvas.tsx";
+import { ProbeModal } from "./probe/ProbeModal.tsx";
 
 /**
  * 웹 껍데기. 화면 자리만 잡는다.
@@ -36,7 +36,7 @@ export function App() {
       <NearPrompt />
       <HomeBanner />
       <PanelPlaceholder />
-      <ProbePlaceholder />
+      <ProbeModal />
       <ToastHost />
     </div>
   );
@@ -100,15 +100,5 @@ function PanelPlaceholder() {
         ))}
       </ul>
     </SidePanel>
-  );
-}
-
-function ProbePlaceholder() {
-  const open = useStore((s) => s.route.name === "probe");
-  const cargo = useStore((s) => s.cargo);
-  return (
-    <Modal open={open} title="🚀 탐사선" onClose={() => store.getState().goBack()} wide>
-      <p className="placeholder">탐사선 자리 (이슈 #8) · 실은 것 {cargo.length}개</p>
-    </Modal>
   );
 }

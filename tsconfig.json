@@ -13,5 +13,5 @@
     "erasableSyntaxOnly": true,
     "types": ["node"]
   },
-  "include": ["packages/**/*.ts", "mocks/**/*.ts"]
+  "include": ["packages/**/*.ts", "mocks/**/*.ts", "apps/**/*.ts"]
 }
