@@ -5,11 +5,11 @@ import { addDays, parseLocalDate, toLocalDateString, weekPeriod } from "@spacelo
 import type { Star } from "@spacelog/shared/types";
 import { openVault, ulid, type Vault } from "./db.ts";
 
-type Seed = { planet: string; text?: string; url?: string; title?: string };
+type Seed = { planet: string; text?: string; url?: string };
 
 /** 7일 전 (재발견 후보). 데모 4~5분: "7일 전 오늘의 별" */
 const WEEK_AGO: Seed[] = [
-  { planet: "디자인", url: "https://www.figma.com/community/file/onboarding-moodboard", title: "온보딩 무드보드 레퍼런스" },
+  { planet: "디자인", url: "https://www.figma.com/community/file/onboarding-moodboard" },
   { planet: "공부", text: "강의노트: 3D 좌표계 — 카메라는 lookAt으로, 행성 궤도는 반지름·각속도로 정한다." },
   { planet: "업무", text: "회의록: 데모 동선은 드롭 → 저장 → 우주 → 재발견 → 탐사선 순서로 간다." },
 ];
@@ -17,25 +17,25 @@ const WEEK_AGO: Seed[] = [
 /** 이번 주 20개. 뒤쪽 6개가 오늘 */
 const THIS_WEEK: Seed[] = [
   { planet: "업무", text: "주간보고 초안: 수집 앱 드롭존 완성, 서버 보관함 DB 연결." },
-  { planet: "업무", url: "https://www.notion.so/spacelog/sprint-plan", title: "스프린트 기획" },
+  { planet: "업무", url: "https://www.notion.so/spacelog/sprint-plan" },
   { planet: "업무", text: "발표 준비: 3분 데모 + 질의응답 2분. 시연 PC 해상도 확인." },
-  { planet: "업무", url: "https://docs.google.com/presentation/d/demo-deck", title: "데모 발표 자료" },
+  { planet: "업무", url: "https://docs.google.com/presentation/d/demo-deck" },
   { planet: "업무", text: "회의: 행성 자동 배정은 키워드 규칙으로 확정 (Q1)." },
-  { planet: "공부", url: "https://www.inflearn.com/course/threejs-basics", title: "Three.js 기초 강의" },
+  { planet: "공부", url: "https://www.inflearn.com/course/threejs-basics" },
   { planet: "공부", text: "스터디 요약: SQLite WAL 모드는 읽기와 쓰기가 서로 막지 않는다." },
-  { planet: "공부", url: "https://arxiv.org/abs/2106.09685", title: "논문: LoRA" },
+  { planet: "공부", url: "https://arxiv.org/abs/2106.09685" },
   { planet: "공부", text: "과제: 망각 곡선 정리 — 7일·14일·30일 간격 복습이 기억 유지에 효과적." },
   { planet: "공부", text: "시험 범위: 운영체제 4~7장, 기출 2회분 풀기." },
-  { planet: "개발", url: "https://github.com/nodejs/node/blob/main/doc/api/sqlite.md", title: "node:sqlite 문서" },
+  { planet: "개발", url: "https://github.com/nodejs/node/blob/main/doc/api/sqlite.md" },
   { planet: "개발", text: "에러 메모: EADDRINUSE → 포트 +1씩 최대 10번 재시도로 해결." },
-  { planet: "개발", url: "https://stackoverflow.com/questions/three-js-orbit-controls", title: "OrbitControls 질문" },
+  { planet: "개발", url: "https://stackoverflow.com/questions/three-js-orbit-controls" },
   { planet: "개발", text: "배포 체크: 서명 없는 exe는 앱 제어 정책에 막힘 → 개발 모드로 데모." },
-  { planet: "개발", url: "https://developer.mozilla.org/docs/Web/API/WebGL_API", title: "WebGL API" },
-  { planet: "디자인", url: "https://dribbble.com/shots/space-dashboard", title: "우주 대시보드 시안" },
+  { planet: "개발", url: "https://developer.mozilla.org/docs/Web/API/WebGL_API" },
+  { planet: "디자인", url: "https://dribbble.com/shots/space-dashboard" },
   { planet: "디자인", text: "색상 토큰: planet-1~7, 배경은 깊은 남색, 별은 따뜻한 흰색." },
-  { planet: "디자인", url: "https://www.behance.net/gallery/space-ui", title: "우주 UI 레퍼런스" },
+  { planet: "디자인", url: "https://www.behance.net/gallery/space-ui" },
   { planet: "디자인", text: "폰트 후보: Pretendard 본문, 제목은 자간 -2%." },
-  { planet: "디자인", url: "https://mobbin.com/browse/web/flows/onboarding", title: "온보딩 플로우 모음" },
+  { planet: "디자인", url: "https://mobbin.com/browse/web/flows/onboarding" },
 ];
 
 const TODAY_COUNT = 6;
@@ -57,12 +57,12 @@ function toStar(seed: Seed, at: Date, planetId: string): Star {
     sizeBytes: null,
     sha256: null,
     url: seed.url ?? null,
-    linkTitle: seed.title ?? null,
+    linkTitle: null, // 링크 제목 가져오기는 이번 범위 밖 (PRD 3장, 2026-11-11 PO 축소) → 화면은 도메인
     linkDomain: link ? link.hostname.replace(/^www\./, "") : null,
     textBody: seed.text ?? null,
     thumbnailPath: null,
     thumbnailStatus: "fallback",
-    linkFetchStatus: link ? "done" : "none",
+    linkFetchStatus: "none",
     memo: null,
   };
 }
