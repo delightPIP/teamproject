@@ -46,15 +46,34 @@
 - 알림은 하루 1번, **현지 15:00**에 보낸다 (잠정). 그 시각에 PC가 꺼져 있었으면 같은 날 다음 실행 때 1번 보낸다. 지난 날짜의 알림은 몰아서 보내지 않는다.
 - 알림이 뜬 횟수와 열어본 횟수를 로컬에 기록한다. 이 값이 성공 기준 "다시 만난다"의 측정값이다.
 
-**2-3. 행성 자동 배정 (개발 B) — Q1 결정 전 잠정안**
-- 기본 행성은 파일 유형별로 둔다: 이미지, 문서, 링크, 메모, 기타.
+**2-3. 행성 자동 배정 (개발 B) — Q1 결정: 키워드 규칙 (2026-11-11)**
+- 행성은 "파일 종류"가 아니라 **주제**다. 첫 실행 때 기본 행성 7개(주제 6개 + 미분류)를 만들고, 행성마다 키워드를 둔다.
+- 모든 계산은 내 PC 안에서 한다. 외부 AI는 쓰지 않는다 (PRD 3장 제외 범위).
+
+| 행성 | 키워드 (한글) | 키워드 (영문) | 도메인 | 확장자 |
+| --- | --- | --- | --- | --- |
+| 업무 | 회의, 회의록, 보고서, 기획, 제안서, 견적, 계약, 일정, 업무, 주간보고, 결재, 발표 | meeting, minutes, report, proposal, plan, invoice, kpi, okr | notion.so, slack.com, docs.google.com, drive.google.com, atlassian.net, office.com | ppt, pptx, xls, xlsx |
+| 공부 | 강의, 과제, 시험, 요약, 정리, 노트, 필기, 수업, 스터디, 논문, 레포트, 자격증, 기출 | lecture, study, exam, assignment, course, paper, notes | inflearn.com, coursera.org, udemy.com, arxiv.org, scholar.google.com, riss.kr, dbpia.co.kr, wikipedia.org | hwp, hwpx |
+| 개발 | 코드, 에러, 오류, 버그, 배포, 서버, 함수 | code, error, bug, api, deploy, react, python, sql, docker, git | github.com, stackoverflow.com, velog.io, developer.mozilla.org, npmjs.com | py, js, ts, json, sql, log |
+| 디자인 | 디자인, 레퍼런스, 시안, 무드보드, 로고, 폰트, 색상, 아이콘 | design, reference, moodboard, ui, ux, logo, font, palette | figma.com, behance.net, dribbble.com, pinterest.com, mobbin.com | fig, psd, ai, sketch |
+| 읽을거리 | 기사, 뉴스, 아티클, 칼럼, 블로그, 영상, 인터뷰, 나중에 | article, news, blog, video | youtube.com, youtu.be, medium.com, brunch.co.kr, blog.naver.com | — |
+| 생활 | 여행, 맛집, 예약, 쇼핑, 영수증, 레시피, 항공권, 숙소, 주문 | travel, recipe, receipt, order | coupang.com, musinsa.com, map.naver.com, airbnb.co.kr | — |
+| 미분류 | (키워드 없음. 어디에도 맞지 않으면 여기로) | | | |
+
+- **비교 대상**: 저장하는 순간(3초 목표 안)에 있는 값만 쓴다.
+  - 쓴다: 파일 이름(확장자 제외), 확장자, 링크 URL(도메인·경로), 텍스트 본문 앞 2,000자
+  - 쓰지 않는다: 링크 제목(저장 뒤에 가져온다, 1-4), 이미지 내용, PDF 등 파일 본문
+- **비교 방법**: 대소문자를 구분하지 않는다. 한글 키워드는 부분 일치("회의록2"에 "회의"), 영문 키워드는 **단어 단위** 일치("mail"에서 "ai"를 찾지 않는다). 도메인은 그 도메인이거나 하위 도메인이면 일치한다(`m.youtube.com` → `youtube.com`).
+- **고르는 순서**: ① 도메인이 맞는 행성 → ② 확장자가 맞는 행성 → ③ 키워드가 가장 많이 맞은 행성 → 동점이면 행성 목록 순서(만든 순서).
+- **행성 이름도 키워드다.** 사용자가 만든 행성(예: "토익")은 이름이 곧 키워드다. 기본 행성은 위 키워드 + 지금 이름이다. 이름을 바꾸면 새 이름으로 맞춘다.
+- 어느 행성에도 맞지 않으면 **"미분류"** 에 넣는다. "미분류"는 이름을 바꾸거나 지울 수 없다.
 - 넣은 직후 사용자가 행성을 바꾸면 그 선택을 따른다.
-- 배정할 곳이 없으면 **"미분류"** 행성에 넣는다. "미분류"는 이름을 바꾸거나 지울 수 없다.
+- **키워드 편집** (고도화 후보): 사용자가 행성의 키워드를 직접 고치는 기능. MVP 작업 중 시간이 되면 행성 패널(#5)에 넣고, 1주 차 끝 진척으로 못 하면 다음 단계로 넘긴다. 그 전까지 키워드는 위 표와 행성 이름으로 고정이다.
 
 **2-4. 행성 관리**
 - 이름은 앞뒤 공백을 빼고 1~20자다. 대소문자를 구분하지 않고 중복을 막는다.
 - 행성은 최대 50개까지 만들 수 있다 (잠정).
-- 삭제는 별이 0개인 행성만 할 수 있다.
+- 삭제는 별이 0개인 행성만 할 수 있다. "0개"는 **전체 기간** 기준이다. 기간 밖에 별이 하나라도 있으면 지울 수 없다 (SPEC S4 확정).
 - 합치기는 A를 B에 합치는 방식이다. A의 별이 모두 B로 옮겨지고 A는 삭제된다. 되돌릴 수 없으므로 확인창을 띄운다.
 
 **2-5. 행성 크기 공식 (개발 C, 디자이너 1)**
