@@ -63,6 +63,8 @@ flowchart LR
 | 전역 단축키 | 지금 클립보드 내용을 기록 1개로 저장 → 드롭존이 펼쳐지며 `confirm`. 기본값 `⌘⇧Space` / `Ctrl+Shift+Space` (SPEC 제안) |
 | 설정 창 | 단축키 바꾸기 · 재발견 알림 켜기/끄기 · 로그인 시 자동 실행 · 보관함 위치(경로, [폴더 열기], [위치 바꾸기]) · 디스크 사용량(보관함 크기 / 남은 공간) |
 
+> **개발 전용 알림 시각 (SPEC 제안, PO)**: 환경 변수 `SPACELOG_NOTIFY_AT="HH:MM"`이 있으면 2-4의 `notificationTime`을 덮어쓴다. 데모에서 15:00을 기다릴 수 없기 때문이다 (DEMO 1장 사전 준비). 설정 창에는 넣지 않고, 배포 빌드에서는 읽지 않는다.
+
 ### 1-3. 수집 앱 — 재발견 알림 (표시 PO · 별 고르기 개발 A)
 
 - 운영체제 기본 알림. 제목 `N일 전 오늘의 별 ✦`, 본문 `{별 제목} · {행성 이름}`
@@ -173,7 +175,7 @@ TopBar의 [🚀 탐사선] 버튼으로 여는 큰 모달(또는 전체 화면 �
 
 ## 2. 데이터 모델 (Data Schema)
 
-1일 차에 개발 B가 이 초안으로 API 목업을 내고 개발 3명과 PO가 확정한다 (PRD 6장 공통 약속). 저장소는 보관함 안의 단일 DB 파일(예: SQLite)을 제안한다 (Q3·Q9 결정 시 확정, 잠정).
+1일 차에 개발 B가 이 초안으로 API 목업을 내고 개발 3명과 PO가 확정한다 (PRD 6장 공통 약속). 저장소는 보관함 안의 단일 DB 파일(예: SQLite)을 제안한다 (Q3는 Electron으로 확정됨. Q9 결정 시 확정, 잠정).
 
 ### 2-1. Star (기록 / 별)
 
@@ -276,6 +278,8 @@ interface Settings {
   shortcut: string;                // 예 "CommandOrControl+Shift+Space"
   rediscoveryNotification: boolean;// 기본 true
   notificationTime: "15:00";       // (잠정) P 2-2
+  // 개발 전용: 환경 변수 SPACELOG_NOTIFY_AT="HH:MM"이 있으면 이 값을 덮어쓴다.
+  // 데모에서 15:00을 기다릴 수 없어 둔 장치다 (DEMO 1장 사전 준비). 배포 빌드에서는 읽지 않는다 (SPEC 제안, PO)
   launchAtLogin: boolean;          // 기본 true
   lastNotifiedLocalDate: string | null; // 몰아 보내기 방지
   onboardingDone: boolean;
@@ -537,7 +541,7 @@ URL: https://example.com/three-perf
 
 ## 5. 모듈 및 파일 구성 제안
 
-기술 스택은 Q3(수집 앱·서버)와 Q9(웹)에서 정한다. 아래는 스택과 무관한 폴더 구성이고, 예시 확장자는 **Tauri 또는 Electron + TypeScript, 웹 Vite + Three.js** 가정이다 (잠정).
+수집 앱·서버 스택은 **Electron + TypeScript로 확정**됐다 (Q3, [ADR 0001](adr/0001-collector-server-stack.md), 2026-11-11). 웹은 Q9에서 정한다. 아래 폴더 구성은 스택과 무관하며, 웹 예시 확장자는 **Vite + Three.js** 가정이다 (잠정).
 
 ```
 /

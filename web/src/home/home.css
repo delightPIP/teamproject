@@ -56,3 +56,15 @@ kbd { font-family: var(--font-mono); font-size: var(--font-size-xs); background:
   .near { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); font-size: 14px; }
   .home-banner { bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
 }
+
+.rediscovery { position: fixed; right: var(--gutter); bottom: var(--gutter); z-index: 10; width: min(300px, calc(100vw - 2 * var(--gutter))); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.rediscovery__eyebrow { font-family: var(--font-display); font-size: 13px; color: var(--color-accent); letter-spacing: 0.04em; }
+.rediscovery__body { display: flex; gap: var(--space-3); align-items: center; min-width: 0; }
+.rediscovery__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rediscovery__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rediscovery__planet { font-size: 12px; color: var(--color-text-muted); }
+.rediscovery__actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+.rediscovery__actions .btn { font-size: 13px; padding: 6px 12px; }
+@media (max-width: 760px) {
+  .rediscovery { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+}
