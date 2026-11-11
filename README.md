@@ -79,7 +79,7 @@ flowchart LR
 
 | 영역 | 후보 | 상태 |
 | --- | --- | --- |
-| 수집 앱 + 로컬 서버 (Q3) | **Electron + TypeScript 서버** 제안 ([ADR 0001](docs/adr/0001-collector-server-stack.md)) | 윈도우 스파이크 측정 완료, 맥 측정과 개발 B 확인 후 채택 |
+| 수집 앱 + 로컬 서버 (Q3) | **Electron + TypeScript 서버** 채택 ([ADR 0001](docs/adr/0001-collector-server-stack.md)) | 2026-11-11 채택 (PR #15). Tauri 측정은 생략(ADR 4-2). 맥·설치본 알림 클릭은 채택 후 확인 |
 | 웹 + 우주 렌더링 (Q9) | [ADR 0002](docs/adr/0002-web-stack.md) 초안 (개발 B) | 개발 B·C가 1주 차 초에 확정, Q7 결정에 맞춤 |
 
 ### 폴더 구성 (SPEC 제안 · `packages/shared`, `mocks/api`는 #1로 들어옴)
@@ -140,7 +140,7 @@ docs/               # 기획 문서
 ## 📌 팀 협업 파이프라인
 1. `/setup` ➔ 2. `/prd` ➔ 3. `/toPolicy` ➔ 4. `/toSpec` ➔ 5. `/toIssue` ➔ 6. `/impl` ➔ 7. `/pr`
 
-현재 5단계(`/toIssue`)까지 끝났다. 이슈 #1~#10이 등록되어 있고, 다음은 각자 이슈를 받아 `/impl`로 구현한다. #1 공통 타입·API 목업은 머지됐다 (PR #13). 남은 1일 차 선행 작업은 Q3 스택 확정(PO·개발 B)과 Q9 확정(개발 B·C)이다.
+현재 5단계(`/toIssue`)까지 끝났다. 이슈 #1~#10이 등록되어 있고, 다음은 각자 이슈를 받아 `/impl`로 구현한다. #1 공통 타입·API 목업은 머지됐다 (PR #13). Q3 스택은 Electron으로 채택됐다 (PR #15). 남은 1일 차 선행 작업은 Q9 확정(개발 B·C)이다.
 
 ## 🛡️ Git 3대 수칙 (충돌 방지 자동화)
 1. **브랜치 시작 전**: 항상 최신 main 당겨오기
