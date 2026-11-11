@@ -92,6 +92,7 @@ export class PlanetView {
     this.label.raycast = () => {};
     this.group.add(this.label);
     this.update(planet);
+    this.setRadius(0); // 별 개수가 정해질 때까지 숨긴다
   }
 
   /** 이름·별 개수 반영. 개수가 0이면 사라진다 */
