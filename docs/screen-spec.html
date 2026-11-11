@@ -1,0 +1,471 @@
+<title>우주 아카이브 화면정의서</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 스펙 문서. 상단 요약 → 화면 지도 → 화면 목록 → 화면별 카드(왼쪽 와이어프레임, 오른쪽 요소표) → 공통 규칙 → 열린 질문 */
+:root{
+  --bg:#f6f6fa; --surface:#ffffff; --ink:#1b1c2e; --muted:#5d5f78; --line:#d9dae6;
+  --accent:#4a46c8; --accent-soft:#e9e8fb; --mark:#e0632f; --mark-ink:#ffffff;
+  --wire:#a7a9c0; --wire-fill:#f0f0f6; --ok:#2e7d5b; --warn:#a8650c; --warn-soft:#fbf1e2;
+  --font-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12131d; --surface:#1b1c2a; --ink:#e8e8f2; --muted:#a3a5bf; --line:#30324a;
+  --accent:#9f9bff; --accent-soft:#2a2850; --mark:#ff8a57; --mark-ink:#1b1c2a;
+  --wire:#5d6080; --wire-fill:#23253a; --ok:#6fcf9f; --warn:#f0b35a; --warn-soft:#3a2e1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12131d; --surface:#1b1c2a; --ink:#e8e8f2; --muted:#a3a5bf; --line:#30324a;
+  --accent:#9f9bff; --accent-soft:#2a2850; --mark:#ff8a57; --mark-ink:#1b1c2a;
+  --wire:#5d6080; --wire-fill:#23253a; --ok:#6fcf9f; --warn:#f0b35a; --warn-soft:#3a2e1c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:40px}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:30px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:700}
+h3{font-size:17px;font-weight:600}
+p{margin:0;max-width:68ch}
+a{color:var(--accent)}
+code,.id{font-family:var(--font-mono);font-size:.86em}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:grid;gap:12px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--muted);font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);align-items:center}
+.section{display:grid;gap:16px}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:12px;letter-spacing:.04em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td .id{white-space:nowrap}
+.pill{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--mark);color:var(--mark-ink);font-family:var(--font-mono);font-size:11px;font-weight:600;flex:none}
+
+/* 화면 지도 */
+.map svg{display:block;min-width:900px;width:100%;height:auto}
+.map .grp{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:5 4}
+.map .grp-l{fill:var(--muted);font:600 12px var(--font-body)}
+.map .node rect{fill:var(--surface);stroke:var(--accent);stroke-width:1.5}
+.map .node.os rect{stroke:var(--wire);stroke-dasharray:4 3}
+.map .node text{fill:var(--ink);font:600 13px var(--font-body)}
+.map .node .nid{fill:var(--accent);font:600 11px var(--font-mono)}
+.map .edge{fill:none;stroke:var(--muted);stroke-width:1.4}
+.map .el{fill:var(--muted);font:12px var(--font-body);paint-order:stroke;stroke:var(--surface);stroke-width:5px}
+.map .arrow{fill:var(--muted)}
+
+/* 화면 카드 */
+.screen{display:grid;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.screen-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline}
+.screen-head .id{color:var(--accent);font-weight:600;font-size:14px}
+.screen-head .owners{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.screen-body{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px;align-items:start}
+@media (max-width:820px){.screen-body{grid-template-columns:1fr}}
+.screen-body > div{min-width:0}
+.purpose{color:var(--muted)}
+.sub{display:grid;gap:8px}
+.sub h4{margin:0;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.03em}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px}
+.states td:first-child{white-space:nowrap;font-weight:500}
+
+/* 와이어프레임 */
+.wire{position:relative;background:var(--wire-fill);border:1.5px solid var(--wire);border-radius:10px;padding:14px;display:grid;gap:10px;font-size:13px;color:var(--muted)}
+.wire .box{position:relative;border:1.5px dashed var(--wire);border-radius:8px;padding:10px;background:var(--surface);display:grid;gap:6px}
+.wire .box.solid{border-style:solid}
+.wire .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wire .grow{flex:1;min-width:0}
+.wire .btn{border:1.5px solid var(--wire);border-radius:6px;padding:3px 10px;background:var(--surface);color:var(--ink);font-size:12px;white-space:nowrap}
+.wire .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.wire .chip{border-radius:999px;padding:1px 9px;background:var(--accent-soft);color:var(--accent);font-size:12px}
+.wire .line{height:8px;border-radius:4px;background:var(--line)}
+.wire .thumb{width:34px;height:34px;border-radius:6px;background:var(--line);flex:none}
+.wire .num{position:absolute;top:-9px;left:-9px;z-index:1}
+.wire .space{min-height:190px;border-radius:8px;background:radial-gradient(circle at 30% 40%,var(--accent-soft) 0 26px,transparent 27px),radial-gradient(circle at 68% 62%,var(--accent-soft) 0 40px,transparent 41px),radial-gradient(circle at 55% 22%,var(--accent-soft) 0 16px,transparent 17px),var(--surface);border:1.5px dashed var(--wire);position:relative;display:grid;place-items:end start;padding:10px}
+.wire .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:10px}
+@media (max-width:480px){.wire .split{grid-template-columns:1fr}}
+.wire pre{margin:0;font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.osnote{border:1.5px solid var(--wire);border-radius:10px;background:var(--surface);padding:10px 12px;display:grid;gap:2px;box-shadow:0 6px 18px -10px rgba(20,20,40,.35)}
+.osnote b{color:var(--ink)}
+
+.callout{background:var(--warn-soft);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.callout h3{font-size:15px;color:var(--warn)}
+footer{color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">화면정의서 · v0.1</span>
+  <h1>우주 아카이브 화면정의서</h1>
+  <p>PRD 1차 초안을 기준으로 화면 8개의 역할, 들어갈 요소, 동작, 상태, 담당을 한 장에 정리했다. 와이어프레임은 요소의 위치와 관계만 보여주는 예시이며, 레이아웃과 비주얼은 디자이너가 정한다.</p>
+  <div class="meta">
+    <span>기준 문서: <a href="https://claude.ai/artifact/E64bsV5PcgEMGBeKRAVk5o">PRD: 우주 아카이브 (가칭)</a></span>
+    <span>작성일: 2026-11-11</span>
+    <span>상태: 초안, PRD 2차 개정 때 함께 갱신</span>
+  </div>
+  <div class="legend">
+    <span><span class="num">1</span> 와이어프레임 번호 = 요소표 번호</span>
+    <span><span class="pill">구현</span> 담당 개발</span>
+    <span><span class="pill warn">미정</span> 정할 것</span>
+  </div>
+</header>
+
+<section class="section map" aria-labelledby="h-map">
+  <h2 id="h-map">화면 지도</h2>
+  <p>수집 앱은 모으기만 하고, 보기·정리·내보내기는 앱이 띄우는 로컬 웹에서 한다. 웹으로 들어오는 입구는 "우주 보기" 버튼과 재발견 알림 두 곳이다.</p>
+  <div class="scroll">
+  <svg viewBox="0 0 960 400" role="img" aria-label="수집 앱 화면 4개와 로컬 웹 화면 4개 사이의 이동 경로">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <rect class="grp" x="14" y="14" width="262" height="372" rx="12"/>
+    <text class="grp-l" x="30" y="36">수집 앱 (맥·윈도우 데스크톱)</text>
+    <rect class="grp" x="330" y="14" width="616" height="372" rx="12"/>
+    <text class="grp-l" x="346" y="36">로컬 웹 (브라우저, 내 PC에서만)</text>
+
+    <g class="node"><rect x="50" y="52" width="200" height="56" rx="8"/><text class="nid" x="64" y="74">S-01</text><text x="64" y="95">드롭존</text></g>
+    <g class="node"><rect x="50" y="142" width="200" height="56" rx="8"/><text class="nid" x="64" y="164">S-02</text><text x="64" y="185">넣은 직후 확인</text></g>
+    <g class="node"><rect x="50" y="232" width="200" height="56" rx="8"/><text class="nid" x="64" y="254">S-04</text><text x="64" y="275">설정</text></g>
+    <g class="node os"><rect x="50" y="318" width="200" height="56" rx="8"/><text class="nid" x="64" y="340">S-03</text><text x="64" y="361">재발견 알림 (OS)</text></g>
+
+    <g class="node"><rect x="400" y="172" width="200" height="56" rx="8"/><text class="nid" x="414" y="194">W-01</text><text x="414" y="215">우주 홈 (조망·비행)</text></g>
+    <g class="node"><rect x="700" y="52" width="200" height="56" rx="8"/><text class="nid" x="714" y="74">W-02</text><text x="714" y="95">행성 패널</text></g>
+    <g class="node"><rect x="700" y="172" width="200" height="56" rx="8"/><text class="nid" x="714" y="194">W-03</text><text x="714" y="215">별 상세</text></g>
+    <g class="node"><rect x="700" y="300" width="200" height="56" rx="8"/><text class="nid" x="714" y="322">W-04</text><text x="714" y="343">탐사선</text></g>
+
+    <path class="edge" d="M150,108 L150,140" marker-end="url(#ah)"/>
+    <text class="el" x="158" y="128">끌어다 놓기</text>
+    <path class="edge" d="M50,80 L34,80 L34,260 L48,260" marker-end="url(#ah)"/>
+    <text class="el" x="38" y="226" transform="rotate(-90 38 226)">설정 열기</text>
+    <path class="edge" d="M250,80 C330,80 330,190 398,190" marker-end="url(#ah)"/>
+    <text class="el" x="292" y="120">우주 보기</text>
+    <path class="edge" d="M250,346 C330,346 330,212 398,212" marker-end="url(#ah)"/>
+    <text class="el" x="282" y="306">알림 누르기</text>
+    <path class="edge" d="M600,186 C650,186 650,80 698,80" marker-end="url(#ah)"/>
+    <text class="el" x="606" y="132">착륙·바로 날아가기</text>
+    <path class="edge" d="M800,108 L800,170" marker-end="url(#ah)"/>
+    <text class="el" x="808" y="146">별 선택</text>
+    <path class="edge" d="M900,80 L928,80 L928,328 L902,328" marker-end="url(#ah)"/>
+    <text class="el" x="934" y="214" transform="rotate(90 934 214)">싣기</text>
+    <path class="edge" d="M600,214 C650,214 650,328 698,328" marker-end="url(#ah)"/>
+    <text class="el" x="610" y="290">탐사선 열기</text>
+  </svg>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="h-index">
+  <h2 id="h-index">화면 목록</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>ID</th><th>화면</th><th>형태</th><th>들어오는 길</th><th>구현</th><th>디자인</th></tr></thead>
+    <tbody>
+      <tr><td class="id">S-01</td><td>드롭존</td><td>화면 가장자리에 떠 있는 작은 창</td><td>로그인 시 자동 실행, 메뉴바·트레이 아이콘</td><td>PO</td><td>디자이너 2</td></tr>
+      <tr><td class="id">S-02</td><td>넣은 직후 확인</td><td>드롭존 안에서 펼쳐지는 영역</td><td>S-01에 기록을 넣은 직후</td><td>PO</td><td>디자이너 2</td></tr>
+      <tr><td class="id">S-03</td><td>재발견 알림</td><td>운영체제 알림</td><td>하루 1회 자동</td><td>표시: PO / 별 고르기: 개발 A</td><td>운영체제 기본</td></tr>
+      <tr><td class="id">S-04</td><td>설정</td><td>작은 창</td><td>S-01의 설정 아이콘, 트레이 메뉴</td><td>PO</td><td>디자이너 2</td></tr>
+      <tr><td class="id">W-01</td><td>우주 홈</td><td>웹 전체 화면 (3D + 2D 요소)</td><td>"우주 보기", S-03 알림</td><td>개발 C</td><td>디자이너 1</td></tr>
+      <tr><td class="id">W-02</td><td>행성 패널</td><td>우주 위 오른쪽 패널</td><td>W-01에서 착륙·바로 날아가기</td><td>개발 B</td><td>디자이너 2</td></tr>
+      <tr><td class="id">W-03</td><td>별 상세</td><td>W-02 안에서 열리는 상세</td><td>W-02 별 목록에서 선택, 재발견 카드</td><td>개발 B</td><td>디자이너 2</td></tr>
+      <tr><td class="id">W-04</td><td>탐사선</td><td>오른쪽 서랍</td><td>W-01 탐사선 버튼, W-02 싣기</td><td>개발 A</td><td>디자이너 2</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- S-01 -->
+<section class="screen" aria-labelledby="h-s01">
+  <div class="screen-head"><span class="id">S-01</span><h2 id="h-s01">드롭존</h2>
+    <div class="owners"><span class="pill">구현 PO</span><span class="pill">디자인 디자이너 2</span></div></div>
+  <p class="purpose">하던 일을 멈추지 않고 기록을 넣는 입구. 가볍게 뜨고, 넣고 나면 바로 사라진다.</p>
+  <div class="screen-body">
+    <div class="wire" aria-label="드롭존 와이어프레임">
+      <div class="box"><span class="num">1</span>
+        <div class="row" style="justify-content:center;min-height:90px;text-align:center">여기에 끌어다 놓기<br>이미지 · 파일 · 텍스트 · 링크</div>
+      </div>
+      <div class="box solid"><span class="num">2</span><div class="row">붙여넣기 <span class="chip">Ctrl/⌘ V</span> 클립보드 바로 기록 <span class="chip">단축키</span></div></div>
+      <div class="row"><span class="btn primary" style="position:relative"><span class="num" style="top:-12px;left:-12px">3</span>우주 보기</span><span class="grow"></span><span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">4</span>설정</span></div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>드롭 영역</td><td>이미지·파일·텍스트·링크를 받는다. 1개 = 기록 1개. 여러 개를 한 번에 놓으면 각각 기록된다. 드래그가 올라오면 영역을 강조한다.</td></tr>
+          <tr><td><span class="num">2</span></td><td>붙여넣기·단축키 안내</td><td>창에 포커스가 있을 때 붙여넣기로 기록. 전역 단축키는 창이 접혀 있어도 지금 클립보드 내용을 바로 기록한다.</td></tr>
+          <tr><td><span class="num">3</span></td><td>우주 보기</td><td>로컬 웹(W-01)을 기본 브라우저로 연다.</td></tr>
+          <tr><td><span class="num">4</span></td><td>설정</td><td>S-04를 연다.</td></tr>
+        </tbody>
+      </table></div>
+      <h4>상태</h4>
+      <div class="scroll"><table class="states"><tbody>
+        <tr><td>접힘 (기본)</td><td>화면 가장자리에 작은 탭으로 붙어 있다. 드래그가 가까이 오거나 클릭하면 펼친다.</td></tr>
+        <tr><td>드래그 중</td><td>드롭 영역 강조.</td></tr>
+        <tr><td>저장 중 → 완료</td><td>3초 안에 완료 표시 후 S-02로 넘어간다 (성공 기준).</td></tr>
+        <tr><td>실패</td><td>무엇이 안 됐는지와 다음 행동을 한 줄로. 예: "로컬 서버가 꺼져 있어요. 앱을 다시 켜 주세요."</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- S-02 -->
+<section class="screen" aria-labelledby="h-s02">
+  <div class="screen-head"><span class="id">S-02</span><h2 id="h-s02">넣은 직후 확인</h2>
+    <div class="owners"><span class="pill">구현 PO</span><span class="pill">디자인 디자이너 2</span></div></div>
+  <p class="purpose">자동 배정된 행성을 보여주고, 원하면 그 자리에서 한 번만 고친다. 이후 정리는 웹에서 한다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="box solid"><span class="num">1</span><div class="row"><span class="thumb"></span><div class="grow">저장했어요 · 회의 캡처.png<div class="line" style="width:60%;margin-top:6px"></div></div></div></div>
+      <div class="box solid"><span class="num">2</span><div class="row">행성 <span class="chip">제품 기획</span><span class="grow"></span><span class="btn">바꾸기 ▾</span></div></div>
+      <div class="box"><span class="num">3</span>한 줄 메모 (선택)</div>
+      <div class="row"><span class="grow"></span><span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">4</span>닫기</span></div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>저장 결과</td><td>썸네일(없으면 종류 아이콘)과 파일 이름·링크 제목·텍스트 앞부분.</td></tr>
+          <tr><td><span class="num">2</span></td><td>배정된 행성 + 바꾸기</td><td>Q1 규칙으로 자동 배정. 목록에서 다른 행성을 고를 수 있다. 새 행성 만들기는 웹에서만.</td></tr>
+          <tr><td><span class="num">3</span></td><td>한 줄 메모</td><td>입력하지 않아도 된다. Enter로 저장.</td></tr>
+          <tr><td><span class="num">4</span></td><td>닫기</td><td>누르지 않아도 몇 초 뒤 자동으로 접힌다. 입력 중이면 기다린다.</td></tr>
+        </tbody>
+      </table></div>
+      <h4>규칙</h4>
+      <ul class="plain"><li>수집 앱에서의 수정은 이 화면에서 1회만 허용한다.</li><li>여러 개를 한 번에 넣었으면 "N개 저장했어요"로 묶어 보여주고, 행성 바꾸기는 묶음 전체에 적용한다.</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- S-03 -->
+<section class="screen" aria-labelledby="h-s03">
+  <div class="screen-head"><span class="id">S-03</span><h2 id="h-s03">재발견 알림</h2>
+    <div class="owners"><span class="pill">표시 PO</span><span class="pill">별 고르기 개발 A</span><span class="pill">디자인 운영체제 기본</span></div></div>
+  <p class="purpose">사용자가 웹을 열지 않아도 지난 기록을 다시 만나게 하는 장치. 문제정의의 핵심 기능이다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="osnote" style="position:relative"><span class="num">1</span>
+        <span class="eyebrow">우주 아카이브</span>
+        <b>7일 전 오늘의 별</b>
+        <span>"온보딩 리서치 메모" · 제품 기획 행성</span>
+      </div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>알림</td><td>제목 "N일 전 오늘의 별", 본문은 별 제목과 행성. 누르면 W-01이 열리고 그 별의 행성으로 날아가 W-03을 연다.</td></tr>
+        </tbody>
+      </table></div>
+      <h4>규칙</h4>
+      <ul class="plain"><li>하루 1회. S-04에서 끌 수 있다.</li><li>"7일 전"은 기록을 넣은 시각 기준.</li><li>같은 별은 다시 고르지 않는다 (개발 A 규칙).</li></ul>
+      <div class="callout"><h3>미정</h3><p>7일 전에 넣은 기록이 없는 날의 대체 규칙 (예: 가장 가까운 이전 날짜, 또는 알림 생략). 담당 개발 A.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- S-04 -->
+<section class="screen" aria-labelledby="h-s04">
+  <div class="screen-head"><span class="id">S-04</span><h2 id="h-s04">설정</h2>
+    <div class="owners"><span class="pill">구현 PO</span><span class="pill">디자인 디자이너 2</span></div></div>
+  <p class="purpose">수집 앱의 최소 설정. 항목을 늘리지 않는다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="box solid"><span class="num">1</span><div class="row">클립보드 기록 단축키<span class="grow"></span><span class="chip">Ctrl+Shift+S</span></div></div>
+      <div class="box solid"><span class="num">2</span><div class="row">재발견 알림<span class="grow"></span><span class="btn">켜짐</span></div></div>
+      <div class="box solid"><span class="num">3</span><div class="row">보관함 위치 · 사용량 2.4GB<span class="grow"></span><span class="btn">폴더 열기</span></div></div>
+      <div class="box solid"><span class="num">4</span><div class="row">로그인 시 자동 실행<span class="grow"></span><span class="btn">켜짐</span></div></div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>단축키</td><td>전역 단축키 변경. 다른 앱과 겹치면 알려준다. 예시 키는 확정 아님.</td></tr>
+          <tr><td><span class="num">2</span></td><td>재발견 알림</td><td>켜기·끄기.</td></tr>
+          <tr><td><span class="num">3</span></td><td>보관함</td><td>원본을 복사해 두는 폴더 위치와 디스크 사용량. 직접 백업할 수 있게 폴더를 연다.</td></tr>
+          <tr><td><span class="num">4</span></td><td>자동 실행</td><td>로그인 시 자동 실행 켜기·끄기. 기본 켜짐.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- W-01 -->
+<section class="screen" aria-labelledby="h-w01">
+  <div class="screen-head"><span class="id">W-01</span><h2 id="h-w01">우주 홈</h2>
+    <div class="owners"><span class="pill">구현 개발 C</span><span class="pill">디자인 디자이너 1</span></div></div>
+  <p class="purpose">들어오자마자 조작 없이 기간 안의 행성 전체가 보이고, 클릭 2번 안에 원하는 행성에 닿는다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="box solid"><span class="num">1</span><div class="row"><b style="color:var(--ink)">우주 아카이브</b><span class="chip">별 42</span><span class="chip">행성 5</span><span class="grow"></span><span class="btn">오늘 ▾</span></div></div>
+      <div class="split">
+        <div class="space"><span class="num" style="top:-9px;left:-9px">2</span>
+          <span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">5</span>WASD 이동 · Space/Shift 상승·하강 · 드래그 시점 · E 착륙</span>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start">
+          <div class="box solid"><span class="num">3</span>행성으로 바로 날아가기
+            <div class="row"><span class="chip">제품 기획 · 14</span></div><div class="row"><span class="chip">읽은 것들 · 11</span></div><div class="row"><span class="chip">생각 조각 · 9</span></div></div>
+          <div class="box solid"><span class="num">4</span><span class="eyebrow">7일 전 오늘의 별</span><div class="row"><span class="thumb"></span><span class="grow">온보딩 리서치 메모</span></div></div>
+          <div class="row"><span class="grow"></span><span class="btn primary" style="position:relative"><span class="num" style="top:-12px;left:-12px">6</span>탐사선 · 3</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>상단 바</td><td>기간 안의 별·행성 개수, 기간 선택(오늘 / 이번 주 / 직접 지정). 기본값은 오늘.</td></tr>
+          <tr><td><span class="num">2</span></td><td>3D 우주</td><td>행성 = 카테고리, 별 = 기록. 기록이 많은 행성일수록 크다. 별은 행성 주변을 돈다.</td></tr>
+          <tr><td><span class="num">3</span></td><td>바로 날아가기 목록</td><td>행성 이름과 별 개수. 누르면 자동 비행 후 W-02를 연다. 비행 조작을 모르는 사용자의 기본 경로.</td></tr>
+          <tr><td><span class="num">4</span></td><td>재발견 카드</td><td>S-03과 같은 별. 누르면 그 행성으로 날아가 W-03을 연다.</td></tr>
+          <tr><td><span class="num">5</span></td><td>조작 안내</td><td>비행 모드 키 안내. 처음 한 번은 크게, 이후 작게.</td></tr>
+          <tr><td><span class="num">6</span></td><td>탐사선 버튼</td><td>실은 개수 배지. W-04를 연다.</td></tr>
+        </tbody>
+      </table></div>
+      <h4>모드</h4>
+      <div class="scroll"><table class="states"><tbody>
+        <tr><td>조망 (기본)</td><td>진입 시 기간 안의 행성 전체가 한 화면에 들어오는 시점. 조작 0회로 전체가 보여야 한다.</td></tr>
+        <tr><td>비행</td><td>WASD·Space·Shift·드래그로 이동. 행성 가까이에서 E 또는 클릭으로 착륙 → W-02.</td></tr>
+        <tr><td>자동 비행</td><td>목록·카드·알림에서 들어올 때. 도착하면 패널을 연다.</td></tr>
+      </tbody></table></div>
+      <h4>상태</h4>
+      <div class="scroll"><table class="states"><tbody>
+        <tr><td>오늘 기록 0개</td><td>이번 주로 넓혀 보여주고 "오늘은 아직 별이 없어서 이번 주를 보여드려요"라고 알린다.</td></tr>
+        <tr><td>기록 전체 0개</td><td>빈 우주 + "수집 앱에 끌어다 놓으면 첫 별이 생겨요".</td></tr>
+        <tr><td>불러오는 중</td><td>우주 배경과 상단 바를 먼저 그리고 행성을 채운다.</td></tr>
+        <tr><td>서버 연결 실패</td><td>"수집 앱이 꺼져 있어요. 앱을 켜고 새로고침해 주세요."</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- W-02 -->
+<section class="screen" aria-labelledby="h-w02">
+  <div class="screen-head"><span class="id">W-02</span><h2 id="h-w02">행성 패널</h2>
+    <div class="owners"><span class="pill">구현 개발 B</span><span class="pill">디자인 디자이너 2</span></div></div>
+  <p class="purpose">한 행성의 별을 훑어보고 정리하는 곳. 우주 위에 겹쳐 열려서 지금 어디에 있는지 잃지 않는다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="box solid"><span class="num">1</span><div class="row"><b style="color:var(--ink)">제품 기획</b><span class="chip">별 14</span><span class="grow"></span><span class="btn">✎ 이름</span><span class="btn">✕</span></div></div>
+      <div class="box solid"><span class="num">2</span>
+        <div class="row"><span class="btn">☐</span><span class="thumb"></span><span class="grow">스프린트 회의 캡처<div class="line" style="width:40%;margin-top:6px"></div></span></div>
+        <div class="row"><span class="btn">☑</span><span class="thumb"></span><span class="grow">경쟁사 온보딩 링크<div class="line" style="width:55%;margin-top:6px"></div></span></div>
+        <div class="row"><span class="btn">☑</span><span class="thumb"></span><span class="grow">요구사항 초안.pdf<div class="line" style="width:35%;margin-top:6px"></div></span></div>
+      </div>
+      <div class="row"><span class="btn primary" style="position:relative"><span class="num" style="top:-12px;left:-12px">3</span>탐사선에 싣기 (2)</span><span class="grow"></span><span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">4</span>행성 메뉴 ⋯</span></div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>행성 머리</td><td>이름, 별 개수, 이름 바꾸기, 닫기(조망으로 돌아감).</td></tr>
+          <tr><td><span class="num">2</span></td><td>별 목록</td><td>썸네일, 제목, 넣은 날짜. 최근 넣은 순. 항목을 누르면 W-03, 체크하면 싣기 대상.</td></tr>
+          <tr><td><span class="num">3</span></td><td>탐사선에 싣기</td><td>체크한 별만, 아무것도 체크하지 않았으면 행성 전체를 싣는다.</td></tr>
+          <tr><td><span class="num">4</span></td><td>행성 메뉴</td><td>새 행성 만들기, 다른 행성과 합치기, 빈 행성 삭제(별이 0개일 때만 활성).</td></tr>
+        </tbody>
+      </table></div>
+      <h4>규칙</h4>
+      <ul class="plain"><li>합치기는 대상 행성을 고르고 화면 안에서 한 번 더 확인받는다. 브라우저 확인창은 쓰지 않는다.</li><li>마감이 짧으면 합치기를 뺄 수 있다 (PRD 축소 순서).</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- W-03 -->
+<section class="screen" aria-labelledby="h-w03">
+  <div class="screen-head"><span class="id">W-03</span><h2 id="h-w03">별 상세</h2>
+    <div class="owners"><span class="pill">구현 개발 B</span><span class="pill">디자인 디자이너 2</span></div></div>
+  <p class="purpose">기록 하나를 원본으로 다시 보고, 메모와 행성을 고친다. 원본 파일은 편집하지 않는다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="row"><span class="btn">← 제품 기획</span></div>
+      <div class="box solid"><span class="num">1</span><div style="min-height:110px;border-radius:6px;background:var(--line)"></div><div class="row">스프린트 회의 캡처.png · 11월 4일 넣음</div></div>
+      <div class="row"><span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">2</span>원본 열기</span><span class="btn">폴더에서 보기</span></div>
+      <div class="box"><span class="num">3</span>메모: 다음 스프린트 우선순위 근거</div>
+      <div class="row"><span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">4</span>행성 옮기기 ▾</span><span class="grow"></span><span class="btn" style="position:relative"><span class="num" style="top:-12px;left:-12px">5</span>삭제</span></div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>원본 미리보기</td><td>이미지는 이미지, 파일은 이름과 종류, 링크는 제목과 주소, 텍스트는 본문. 넣은 날짜.</td></tr>
+          <tr><td><span class="num">2</span></td><td>원본 열기 / 폴더에서 보기</td><td>보관함의 원본을 운영체제 기본 앱으로 열거나 폴더에서 보여준다 (로컬 서버 경유).</td></tr>
+          <tr><td><span class="num">3</span></td><td>메모</td><td>수정 가능. 자동 저장.</td></tr>
+          <tr><td><span class="num">4</span></td><td>행성 옮기기</td><td>다른 행성 선택. 옮기면 우주에서도 별이 이동한다.</td></tr>
+          <tr><td><span class="num">5</span></td><td>삭제</td><td>화면 안에서 한 번 더 확인. 기록과 보관함의 원본 복사본을 함께 지운다.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- W-04 -->
+<section class="screen" aria-labelledby="h-w04">
+  <div class="screen-head"><span class="id">W-04</span><h2 id="h-w04">탐사선</h2>
+    <div class="owners"><span class="pill">구현 개발 A</span><span class="pill">디자인 디자이너 2</span></div></div>
+  <p class="purpose">고른 기록만 Claude가 읽기 좋은 형식으로 만들어 복사한다. 자동 전송은 하지 않는다. 보조 기능이며 수요를 검증한다.</p>
+  <div class="screen-body">
+    <div class="wire">
+      <div class="box solid"><span class="num">1</span><div class="row"><b style="color:var(--ink)">실은 기록 3</b><span class="grow"></span><span class="btn">이 기간 우주 전체 싣기</span></div>
+        <div class="row"><span class="chip">경쟁사 온보딩 링크 ✕</span><span class="chip">요구사항 초안.pdf ✕</span><span class="chip">생각 조각 행성 ✕</span></div></div>
+      <div class="row" style="position:relative"><span class="num" style="top:-9px;left:-9px">2</span><span class="btn primary">Claude 프롬프트</span><span class="btn">MCP 리소스</span></div>
+      <div class="box solid"><span class="num">3</span><pre>## 내 기록 묶음 (2026-11-11, 3개)
+### 제품 기획
+- 경쟁사 온보딩 링크 — 메모: …
+- 요구사항 초안.pdf — 메모: …
+### 생각 조각
+- …</pre></div>
+      <div class="row"><span class="grow" style="position:relative"><span class="num" style="top:-9px;left:-9px">4</span>고른 것만 복사돼요. 자동으로 보내지 않아요.</span><span class="btn primary" style="position:relative"><span class="num" style="top:-12px;left:-12px">5</span>복사하기</span></div>
+    </div>
+    <div class="sub">
+      <h4>요소</h4>
+      <div class="scroll"><table>
+        <thead><tr><th>#</th><th>요소</th><th>동작·규칙</th></tr></thead>
+        <tbody>
+          <tr><td><span class="num">1</span></td><td>실은 목록</td><td>별·행성 단위로 보이고 각각 뺄 수 있다. "이 기간 우주 전체 싣기"로 한 번에 담는다.</td></tr>
+          <tr><td><span class="num">2</span></td><td>형식 선택</td><td>Claude 프롬프트(정리된 텍스트, 기본) / MCP 리소스(JSON). MCP 리소스는 축소 순서 1번.</td></tr>
+          <tr><td><span class="num">3</span></td><td>미리보기</td><td>실제로 복사될 내용을 그대로 보여준다. 구조와 안내 문구는 개발 A가 설계한다.</td></tr>
+          <tr><td><span class="num">4</span></td><td>개인정보 안내</td><td>항상 보이는 한 줄.</td></tr>
+          <tr><td><span class="num">5</span></td><td>복사하기</td><td>클립보드에 복사하고 "복사했어요. Claude에 붙여넣으세요"를 띄운다. 1분 안에 끝나야 한다 (성공 기준).</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><h3>미정</h3><p>이미지·파일 기록을 텍스트 형식에 어떻게 담을지 (파일 이름과 메모만 / 원본 경로 포함 / 따로 첨부 안내). 담당 개발 A, 결정 PO.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="h-common">
+  <h2 id="h-common">공통 규칙</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>항목</th><th>규칙</th></tr></thead>
+    <tbody>
+      <tr><td>용어</td><td>화면에서는 "별"(기록), "행성"(카테고리), "탐사선", "싣기", "복사하기"를 쓴다. "보내기", "전송", "발사"는 쓰지 않는다.</td></tr>
+      <tr><td>시간 기준</td><td>모든 날짜와 "N일 전"은 기록을 넣은 시각 기준.</td></tr>
+      <tr><td>키보드</td><td>W·A·S·D 이동, Space 상승, Shift 하강, 드래그 시점, E 착륙, Esc 패널·서랍 닫기. 입력창에 포커스가 있을 때는 비행 키를 받지 않는다.</td></tr>
+      <tr><td>확인 단계</td><td>삭제·합치기는 화면 안에서 확인받는다. 브라우저 확인창을 쓰지 않는다.</td></tr>
+      <tr><td>문구</td><td>오류는 무엇이 안 됐는지와 다음 행동을 한 줄로. 사과 문구를 붙이지 않는다.</td></tr>
+      <tr><td>개인정보</td><td>기록은 내 PC에만 있다. 밖으로 나가는 건 탐사선에서 사용자가 복사한 것과 링크 제목을 가져오는 요청뿐이다.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="section" aria-labelledby="h-open">
+  <h2 id="h-open">화면 단위 열린 질문</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>#</th><th>질문</th><th>화면</th><th>담당</th></tr></thead>
+    <tbody>
+      <tr><td class="id">SQ1</td><td>7일 전 기록이 없는 날의 재발견 대체 규칙</td><td>S-03, W-01</td><td>개발 A</td></tr>
+      <tr><td class="id">SQ2</td><td>이미지·파일 기록을 탐사선 텍스트에 담는 방식</td><td>W-04</td><td>개발 A · 결정 PO</td></tr>
+      <tr><td class="id">SQ3</td><td>드롭존이 붙는 위치(좌·우·상단)와 접힌 모양, 맥 메뉴바와 윈도우 트레이의 차이</td><td>S-01</td><td>디자이너 2 · PO</td></tr>
+      <tr><td class="id">SQ4</td><td>비행 중 패널이 열려 있을 때 비행 키를 막을지</td><td>W-01, W-02</td><td>개발 C · 디자이너 1</td></tr>
+      <tr><td class="id">SQ5</td><td>행성 배정 규칙(Q1)에 따라 S-02의 "바꾸기" 목록 순서</td><td>S-02</td><td>개발 B</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>PRD의 기능 범위·유저 저니·화면 구조(5장)·오너십(6장)을 근거로 작성했다. PRD가 바뀌면 이 문서도 함께 고친다.</footer>
+</div>
