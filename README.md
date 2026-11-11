@@ -6,7 +6,7 @@
 
 ```mermaid
 flowchart LR
-    A["1. /init<br>(레포 세팅)"] --> B["2. /prd<br>(목적 & 범위)"]
+    A["1. /setup<br>(레포 세팅)"] --> B["2. /prd<br>(목적 & 범위)"]
     B --> C["3. /toPolicy<br>(규칙 & 엣지케이스)"]
     C --> D["4. /toSpec<br>(화면 & 상세구현)"]
     D --> E["5. /toIssue<br>(이슈 쪼개기)"]
@@ -20,7 +20,7 @@ flowchart LR
 
 | 단계 | 명령어 | 역할 | 설명 |
 | :---: | :--- | :--- | :--- |
-| **1** | **`/init [프로젝트명]`** | 레포지토리 초기화 | 오늘 과제 뼈대 + `README.md` + `docs/` 폴더 + 리베이스 강제 Git 훅 자동 세팅 |
+| **1** | **`/setup [프로젝트명]`** | 레포지토리 초기화 | 오늘 과제 뼈대 + `README.md` + `docs/` 폴더 + 리베이스 강제 Git 훅 자동 세팅 |
 | **2** | **`/prd [아이디어]`** | 제품 요구사항 정의 | 해결할 문제, 타깃 유저, MVP 필수 범위(In/Out Scope) 정의 |
 | **3** | **`/toPolicy`** | 정책 및 규칙 수립 | PRD를 바탕으로 보안, 데이터, 비즈니스 계산 공식, 예외 처리 규칙 도출 |
 | **4** | **`/toSpec`** | 상세 구현 명세 | 정책과 PRD를 결합하여 화면 레이아웃, 데이터 모델, 상태 흐름 명세화 |
@@ -38,7 +38,7 @@ flowchart LR
 
 ```text
 https://github.com/[저장소-경로]/team-rules 저장소의 skills/ 폴더에 있는 스킬들을 내 AI 에이전트 전역 스킬(또는 현재 워크스페이스 스킬)로 등록해 줘.
-앞으로 내가 /init, /prd, /toPolicy, /toSpec, /toIssue, /impl, /pr 명령어를 입력하면 해당 스킬의 SKILL.md 지침에 따라 동작하도록 설정해 줘.
+앞으로 내가 /setup, /prd, /toPolicy, /toSpec, /toIssue, /impl, /pr 명령어를 입력하면 해당 스킬의 SKILL.md 지침에 따라 동작하도록 설정해 줘.
 ```
 
 *(선택: 터미널 환경에서 CLI 도구를 쓸 경우 `npx skills add [저장소-경로-또는-URL]` 로도 설치 가능)*
@@ -47,7 +47,7 @@ https://github.com/[저장소-경로]/team-rules 저장소의 skills/ 폴더에 
 
 ## 🚀 매일 새 과제 레포에서의 사용 흐름
 
-1. 빈 과제 폴더에서 AI 채팅창에 `/init [오늘 과제명]` 실행
+1. 빈 과제 폴더에서 AI 채팅창에 `/setup [오늘 과제명]` 실행
 2. 회의하며 화면 띄우고: `/prd` ➔ `/toPolicy` ➔ `/toSpec` ➔ `/toIssue` *(단순 과제는 `/prd` ➔ `/toIssue` 직행 가능)*
 3. 각자 이슈를 할당받은 뒤:
    ```bash
