@@ -37,11 +37,11 @@ flowchart LR
 ### 🤖 AI 에이전트에게 설치 시키기 (채팅창에 붙여넣기)
 
 ```text
-https://github.com/[저장소-경로]/team-rules 저장소의 skills/ 폴더에 있는 스킬들을 내 AI 에이전트 전역 스킬(또는 현재 워크스페이스 스킬)로 등록해 줘.
+https://github.com/delightPIP/teamproject 저장소의 skills/ 폴더에 있는 스킬들을 내 AI 에이전트 전역 스킬(또는 현재 워크스페이스 스킬)로 등록해 줘.
 앞으로 내가 /setup, /prd, /toPolicy, /toSpec, /toIssue, /impl, /pr 명령어를 입력하면 해당 스킬의 SKILL.md 지침에 따라 동작하도록 설정해 줘.
 ```
 
-*(선택: 터미널 환경에서 CLI 도구를 쓸 경우 `npx skills add [저장소-경로-또는-URL]` 로도 설치 가능)*
+*(선택: 터미널 환경에서 CLI 도구를 쓸 경우 `npx skills add delightPIP/teamproject` 로도 설치 가능)*
 
 ---
 
