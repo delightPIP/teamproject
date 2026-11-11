@@ -10,8 +10,8 @@ import type { ConfirmInput, DropFileItem, DropInput, SaveResult } from "./ipcTyp
 type Source = SaveResult["source"];
 
 function failureText(f: ApiFailure): string {
-  // 서버 2/4(#33) 전에는 POST /api/stars 자체가 없다 → NOT_FOUND. "찾는 기록이 없어요"는 맞지 않는 문구라 따로 둔다
-  if (f.code === "NOT_FOUND") return "로컬 서버가 아직 기록 넣기를 지원하지 않아요";
+  // NOT_FOUND는 별이나 행성을 못 찾았다는 뜻이다 (서버 2/4 머지 전 "아직 지원하지 않아요" 문구는 2026-11-11에 걷어냈다)
+  if (f.code === "NOT_FOUND") return "그 별이나 행성을 찾을 수 없어요";
   return f.message ?? errorText(f.code);
 }
 
@@ -114,7 +114,7 @@ export class Ingest {
     if (body.planetId === undefined && body.memo === undefined) return { ok: true, error: null };
     const res = await this.api.request<StarsResponse>("PATCH", "/api/stars", body);
     if (res.ok) return { ok: true, error: null };
-    return { ok: false, error: res.code === "NOT_FOUND" ? "로컬 서버가 아직 메모·행성 바꾸기를 지원하지 않아요" : (res.message ?? errorText(res.code)) };
+    return { ok: false, error: res.code === "NOT_FOUND" ? "그 별이나 행성을 찾을 수 없어요" : (res.message ?? errorText(res.code)) };
   }
 
   private async post(body: FormData | string, extra: Rejected[], source: Source, json = false): Promise<SaveResult> {
