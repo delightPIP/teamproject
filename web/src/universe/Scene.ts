@@ -13,7 +13,8 @@ import { StarsView } from "./Stars.ts";
 import { cssColor, disposeTree, Toon } from "./toon.ts";
 
 const MAX_SPEED = 15;
-const FLY_SECONDS = 1.2; // 자동 비행 (SPEC 3-5)
+const FLY_SECONDS = 1.2;
+const PANEL_CLOSE_DISTANCE = 14; // 패널 행성 표면에서 이만큼 멀어지면 패널을 닫는다 (DESIGN.md 9-4) // 자동 비행 (SPEC 3-5)
 const MOVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"]);
 
 export class UniverseScene {
@@ -33,6 +34,8 @@ export class UniverseScene {
   private drag: { x: number; y: number; sx: number; sy: number } | null = null;
   private raf = 0;
   private t = 0;
+  /** 패널 행성 가까이에 한 번이라도 있었는지. 멀리서 연 패널(목록·딥링크)은 바로 닫지 않으려고 둔다 */
+  private panelNear = false;
   private readonly cleanups: (() => void)[] = [];
 
   private readonly container: HTMLElement;
@@ -307,6 +310,19 @@ export class UniverseScene {
         nearest = surface;
         near = view.id;
       }
+    }
+    // SQ4 (#36, DESIGN.md 9-4): 패널이 열려 있어도 비행 키는 받고, 패널 행성에서 멀어지면 패널을 닫는다
+    const panelPlanet = s.selectedPlanetId ? this.planets.get(s.selectedPlanetId) : undefined;
+    if (panelPlanet?.visible && !this.flight) {
+      const surface = pos.distanceTo(panelPlanet.position) - panelPlanet.radius;
+      // 디자인 기준 표면 + 14. 큰 행성은 자동 비행 도착 지점(표면 1.5r)이 14를 넘을 수 있어 2r 과 비교한다
+      if (surface <= Math.max(PANEL_CLOSE_DISTANCE, 2 * panelPlanet.radius)) this.panelNear = true;
+      else if (this.panelNear && s.camera === "flight") {
+        this.panelNear = false;
+        s.closePanel();
+      }
+    } else if (!s.selectedPlanetId) {
+      this.panelNear = false;
     }
     const showNear = s.camera !== "overview" && !this.flight && near !== s.selectedPlanetId ? near : null;
     if (sceneState.getState().nearPlanetId !== showNear) sceneState.setState({ nearPlanetId: showNear });
