@@ -12,7 +12,26 @@ npm run dev:mock    # mocks/api JSON으로 실행
 
 브라우저에서 `http://localhost:5173/#/?token=dev` 를 연다. 토큰이 없으면 "수집 앱의 [우주 보기]로 다시 열어 주세요" 화면이 나온다. 목업 모드에서는 토큰 값이 무엇이든 통과한다. 기록 0건 우주는 `#/?token=dev&mock=empty`.
 
-실제 서버에 붙일 때는 `.env.example`을 `.env`로 복사하고 `API_TARGET`에 서버 주소를 넣은 뒤 `npm run dev`.
+### 세 가지 띄우는 법 (#34)
+
+| 언제 | 서버 | 웹 | 브라우저 주소 |
+| --- | --- | --- | --- |
+| **목업** (서버 없이) | 없음 | `cd web && npm run dev:mock` | `http://localhost:5173/#/?token=dev` |
+| **실서버 + 개발 서버** | `SPACELOG_TOKEN=dev SPACELOG_DEV_ORIGIN=http://localhost:5173 node apps/server/index.ts` | `web/.env`에 `API_TARGET=http://127.0.0.1:47800` → `cd web && npm run dev` | `http://localhost:5173/#/?token=dev` |
+| **데모·제품** (서버가 웹을 내려줌) | `npm run build -w web` 후 `SPACELOG_TOKEN=dev SPACELOG_WEB_DIR=web/dist node apps/server/index.ts` | 없음 | `http://127.0.0.1:47800/#/?token=dev` |
+
+- 서버 명령은 저장소 루트에서 실행한다. 포트가 사용 중이면 서버가 다음 포트를 쓰니 `{"type":"listening","port":…}` 출력의 포트를 쓴다.
+- 실서버 + 개발 서버에서는 `SPACELOG_DEV_ORIGIN`을 웹 개발 서버 주소와 **정확히** 맞춘다. 다르면 POST 요청이 403으로 막힌다. Host 는 Vite proxy(`changeOrigin`)가 서버 주소로 바꿔 준다.
+- `?token=` 값은 서버의 `SPACELOG_TOKEN`과 같아야 한다. 수집 앱으로 열면 수집 앱이 넣어 준다.
+- 서버 2/4(#33) 전에는 `/api/universe`가 404라 우주가 비어 보인다. 그때는 목업으로 띄운다.
+
+### 데모 PC 확인 (DEMO 1장, 개발 C)
+
+- [ ] 기본 브라우저에 다른 탭 없이 연다
+- [ ] WebGL: 3D 우주가 보인다 (안 되면 "이 브라우저에서는 3D 우주를 볼 수 없어요" 배너와 행성 목록만 나온다)
+- [ ] 조작 없이 행성이 모두 보인다 (AC-우주-1)
+- [ ] 왼쪽 목록에서 행성 1번 클릭 → 자동 비행 → 패널 (AC-우주-3, 클릭 2회 이내)
+- [ ] 오른쪽 아래 재발견 카드 [보러 가기] → 별 상세 (#35, 데모 4~5분)
 
 | 명령 | 하는 일 |
 | --- | --- |
