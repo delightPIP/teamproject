@@ -32,8 +32,10 @@ SpaceLog는 기록이 내 PC에만 있는 제품이다 (PRD 3장, [POLICY](../do
 | Build Command | 비움 |
 | Publish Directory | `.` |
 
-## 릴리스가 나오면 고칠 곳
+## 내려받기 링크
 
-`index.html`의 `#받기` 섹션에 Windows·macOS 줄이 **`준비 중`** 상태로 있다. GitHub Releases에 파일이 올라가면 그 줄을 링크로 바꾸고 `pill soon` → `pill ready`로 바꾼다. 히어로 아래 "설치 파일은 준비 중입니다" 문장도 함께 지운다.
+`#받기`의 Windows·macOS 줄은 `https://github.com/delightPIP/teamproject/releases/latest`로 간다 (이슈 #57). 이 주소는 **공개된(Publish) 릴리스가 하나라도 있어야** 열린다 — 초안만 있으면 404다. 그래서 순서는 태그 푸시 → Release 초안 확인 → Publish → 이 페이지가 Render에 올라가 있는지 확인. 만드는 법은 [apps/collector/README.md](../apps/collector/README.md) "설치 파일 만들기".
+
+zip 파일 이름(`SpaceLog-<버전>-windows-x64.zip` 등)을 바꾸면 `#받기` 안내 문구도 같이 고친다.
 
 서명하지 않은 빌드를 올리는 동안에는 `#막힐때` 섹션(SmartScreen·Gatekeeper 안내)을 지우지 않는다. 스파이크에서 서명 없는 실행 파일이 실제로 윈도우 앱 제어 정책에 막혔다 ([ADR 0001](../docs/adr/0001-collector-server-stack.md) 4-1, PRD 8장).

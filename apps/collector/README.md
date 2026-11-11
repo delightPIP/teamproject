@@ -1,7 +1,7 @@
 # 수집 앱 (PO, 이슈 #6)
 
 Electron + TypeScript (ADR 0001). 드롭존 창, 트레이, 전역 단축키, 넣은 직후 확인 카드, 재발견 알림, 로컬 서버 실행·재시작을 맡는다.
-**오늘(2026-11-11) 데모는 개발 모드로 띄운다.** 패키징은 범위 밖이다 (서명 없는 exe가 윈도우 앱 제어 정책에 막힘, PRD 8장).
+**오늘(2026-11-11) 데모는 개발 모드로 띄운다.** 설치 파일(zip)은 이슈 #57에서 만들었다 — 아래 "설치 파일 만들기".
 
 ## 실행
 
@@ -13,7 +13,7 @@ npm start            # 빌드(dist/) 후 Electron 실행
 
 로컬 웹을 같이 띄우려면 먼저 `web`을 빌드해 둔다 (`web/dist`가 있으면 서버가 정적 파일로 내려준다).
 
-| 환경 변수 (개발 전용, 배포 빌드에서는 읽지 않음) | 뜻 |
+| 환경 변수 (개발용. `SPACELOG_GPU`만 배포 빌드에서도 읽는다) | 뜻 |
 | --- | --- |
 | `SPACELOG_NOTIFY_AT="HH:MM"` | 재발견 알림 시각 덮어쓰기 (SPEC 1-2, DEMO 1장). 기본 15:00 |
 | `SPACELOG_SERVER_ENTRY=dev/mockServer.mjs` | 실제 서버 대신 가짜 서버(메모리 저장)로 띄운다. 서버 2/4(#33) 머지 전 확인용 |
@@ -23,6 +23,42 @@ npm start            # 빌드(dist/) 후 Electron 실행
 
 측정·자가검증 결과는 `%APPDATA%\SpaceLog\collector-metrics.jsonl` (맥 `~/Library/Application Support/SpaceLog/`)에 한 줄씩 쌓인다.
 설정은 같은 폴더의 `settings.json`. 보관함 기본 위치는 `문서/SpaceLog`.
+
+## 설치 파일 만들기 (이슈 #57)
+
+```bash
+cd apps/collector
+npm install
+npm run package                 # 지금 OS·arch용 → out/SpaceLog-0.1.0-windows-x64.zip
+npm run package -- --arch=x64   # 맥에서 Intel용
+```
+
+`package.mjs`가 하는 일: `web/dist`가 없으면 웹 빌드 → `build.mjs` → `@electron/packager`로 묶기(`dist/`만 asar에, 웹은 `resources/web`) → zip.
+패키지 앱은 `app.isPackaged`라서 위 개발용 환경 변수(`SPACELOG_GPU` 제외)를 읽지 않고, 웹은 `resources/web`에서만 찾는다. 웹은 실행할 때마다 새로 빌드한다(오래된 `web/dist`가 실리지 않게).
+
+**배포는 태그로 한다.** `package.json`의 `version`을 올리고 같은 이름의 태그를 푸시하면 `.github/workflows/release.yml`이 윈도우 x64·맥 arm64·맥 x64 zip을 만들어 **Release 초안**에 붙인다. 초안을 확인하고 Publish를 누르는 건 사람이 한다. 실패한 태그 작업을 다시 돌릴 때는 **먼저 남은 초안을 지운다** — 안 지우면 초안이 하나 더 생긴다.
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Actions 탭에서 수동 실행하면 Release 없이 zip만 아티팩트로 받는다.
+
+| 결정 | 이유 |
+| --- | --- |
+| 윈도우 exe를 Electron 원본 `electron.exe`로 되돌린다 | packager가 exe 리소스(이름·버전)를 고치면 해시가 바뀌어 윈도우 앱 제어(스마트 앱 컨트롤)가 막는다. 2026-11-11 이 PC에서 고친 exe는 "An Application Control policy has blocked this file", 원본은 실행됨. 대가: 파일 속성 설명이 "Electron", exe 아이콘 못 바꿈 |
+| 맥은 ad-hoc 재서명 (`codesign --sign -`) | Info.plist를 고쳐 원래 서명이 깨지면 Apple Silicon이 "손상됨"으로 막는다. 공증은 아니라 첫 실행 때 막힌다: macOS 14 이하는 우클릭 → 열기, macOS 15 이상은 시스템 설정 → 개인정보 보호 및 보안 → "그래도 열기" |
+| 맥용은 맥 러너에서 만든다 | 윈도우에서 만들면 .app 안의 심볼릭 링크가 깨진다 |
+| 설치 마법사·자동 업데이트 없음 | 범위 밖 (#57). zip 풀고 실행 |
+
+| 확인 (2026-11-11) | 결과 |
+| --- | --- |
+| 윈도우 zip 만들기 (`npm run package`) | 됨. 167MB |
+| zip을 새 폴더에 풀어 `SpaceLog.exe` 실행 (윈도우 11, 이 PC) | 실행됨. 서버 health 233ms, 포트 47800이 개발용 앱에 잡혀 있어 47801로 감, `/`에서 패키지 안의 웹(index.html) 200 |
+| 드롭·트레이·알림 등 화면 동작 (패키지 앱) | **사람 확인 필요** |
+| 다른 PC의 SmartScreen 경고 | **미측정** |
+| 맥 zip 만들기·실행 | **미측정** (CI 첫 실행에서 만들어짐, 실행은 맥에서 확인 필요) |
 
 ## 구성
 
