@@ -112,4 +112,5 @@ D21의 "브라우저 검사는 안내판, 서버 검사가 문지기"에 해당�
 | Claude Design 접근성 검토 기록 | `docs/DESIGN.md` · `docs/SPEC.md`에서 "접근성" 섹션을 찾지 못했다 |
 | 삭제(DELETE) · 행성 관리 | 라우트 없음. SPEC 0장은 웹 → 서버를 "조회·수정·삭제·내보내기 API"로 그리지만, 현재 서버에는 행성 이름 변경·생성·삭제·합치기, 별 삭제 라우트가 없다 |
 | 별이 껐다 켜도 남는지 | 테스트로 고정되지 않음 (2장) |
+| 썸네일 · 원본 라우트 | SPEC(`docs/SPEC.md:351`)의 `GET /api/stars/:id/thumbnail` · `/original`이 서버에 없다. 웹은 `thumbnailStatus === "ready"`일 때만 썸네일을 요청하는데(`web/src/ui/Thumbnail.tsx:13,20`), 실서버는 모든 별을 `"fallback"`으로 저장한다(`apps/server/vault/ingest.ts:48`, `seed.ts:64`). 그래서 지금은 요청이 나가지 않고 유형 아이콘이 보인다. 썸네일 생성과 이 두 라우트가 같이 들어와야 한다 |
 | Render 배포 주소 확인 | 미확인 |
