@@ -19,7 +19,7 @@ function Toast({ toast }: { toast: ToastItem }) {
     return () => clearTimeout(id);
   }, [toast.id]);
   return (
-    <div className={`toast toast--${toast.kind}`} onClick={() => store.getState().dismissToast(toast.id)}>
+    <div className={`toast card toast--${toast.kind}`} onClick={() => store.getState().dismissToast(toast.id)}>
       {toast.message}
     </div>
   );

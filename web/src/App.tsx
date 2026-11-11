@@ -35,9 +35,11 @@ export function App() {
 
 function AuthRequired() {
   return (
-    <div className="auth-required" role="alert">
-      <h1>{ERROR_MESSAGES.UNAUTHORIZED}</h1>
-      <p>이 창은 보안을 위해 수집 앱에서 열어야 볼 수 있어요.</p>
+    <div className="auth-required">
+      <div className="card" role="alert">
+        <h1>{ERROR_MESSAGES.UNAUTHORIZED}</h1>
+        <p>이 창은 보안을 위해 수집 앱에서 열어야 볼 수 있어요.</p>
+      </div>
     </div>
   );
 }
@@ -48,9 +50,11 @@ function ConnectionBanner() {
   const loading = useStore((s) => s.loading);
   if (!lost) return null;
   return (
-    <Banner tone="error" action={{ label: "다시 시도", onClick: () => void store.getState().refresh(), disabled: loading }}>
-      {NETWORK_MESSAGE}
-    </Banner>
+    <div className="app__banner card">
+      <Banner tone="error" action={{ label: "다시 시도", onClick: () => void store.getState().refresh(), disabled: loading }}>
+        {NETWORK_MESSAGE}
+      </Banner>
+    </div>
   );
 }
 

@@ -16,7 +16,7 @@ export function Modal({ open, title, onClose, children, footer, wide }: Props) {
   return (
     <dialog
       ref={ref}
-      className={`modal${wide ? " modal--wide" : ""}`}
+      className={`modal card${wide ? " modal--wide" : ""}`}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -26,7 +26,7 @@ export function Modal({ open, title, onClose, children, footer, wide }: Props) {
         <>
           <header className="modal__header">
             <h2 className="modal__title">{title}</h2>
-            <Button variant="ghost" onClick={onClose} aria-label="닫기">✕</Button>
+            <Button className="btn--icon" onClick={onClose} aria-label="닫기">✕</Button>
           </header>
           <div className="modal__body">{children}</div>
           {footer && <footer className="modal__footer">{footer}</footer>}
