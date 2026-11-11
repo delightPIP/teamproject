@@ -4,11 +4,8 @@ html, body, #root { height: 100%; margin: 0; }
 body { background: var(--color-bg); color: var(--color-text-on-bg); font-family: var(--font-body); font-size: var(--font-size-md); overflow: hidden; }
 
 .app { position: fixed; inset: 0; }
-.app__banner { position: fixed; top: var(--gutter); left: 50%; transform: translateX(-50%); width: min(560px, calc(100vw - 2 * var(--gutter))); z-index: 30; overflow: hidden; padding: 0; }
 .universe { position: absolute; inset: 0; }
 .universe canvas { display: block; width: 100%; height: 100%; }
-/* shortcut: 우주 홈 HUD(상단 바·행성 목록 등)가 나오기 전까지 왼쪽 위 임시 목록 */
-.app__main { position: absolute; top: var(--gutter); left: var(--gutter); width: min(240px, calc(100vw - 2 * var(--gutter))); max-height: calc(100% - 2 * var(--gutter)); overflow: auto; padding: var(--space-3); display: grid; gap: var(--space-2); background: var(--color-surface); color: var(--color-text); border: var(--line) solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--drop); }
 
 .auth-required { height: 100%; display: grid; place-items: center; padding: var(--gutter); }
 .auth-required .card { padding: 24px 28px; text-align: center; display: grid; gap: var(--space-2); max-width: 440px; }

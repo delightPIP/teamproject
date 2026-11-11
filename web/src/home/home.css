@@ -1,0 +1,58 @@
+/* 우주 홈 HUD. 3D 위에 떠 있는 카드들 (3D 시안 배치) */
+kbd { font-family: var(--font-mono); font-size: var(--font-size-xs); background: var(--ink); color: var(--panel); border-radius: 5px; padding: 1px 6px; margin-right: 3px; }
+
+.topbar { position: fixed; top: var(--gutter); left: var(--gutter); z-index: 10; padding: 12px 16px; display: flex; flex-direction: column; gap: var(--space-2); max-width: min(320px, calc(100vw - 2 * var(--gutter))); }
+.topbar__brand { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: var(--font-size-xl); line-height: 1; letter-spacing: 0.01em; }
+.topbar__brand span { color: var(--color-accent); }
+.topbar__stats { margin: 0; display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; font-size: 12px; font-weight: 700; }
+.topbar__stats b { background: var(--ink); color: var(--yellow); border-radius: 999px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
+.topbar__probe { align-self: flex-start; display: inline-flex; gap: var(--space-2); align-items: center; font-size: var(--font-size-sm); padding: 6px 12px; }
+.badge { background: var(--yellow); color: var(--ink); border-radius: 999px; padding: 0 7px; font-size: 12px; }
+
+.period { display: flex; flex-direction: column; gap: 6px; }
+.seg { display: flex; border: var(--line-thin) solid var(--color-border); border-radius: 999px; overflow: hidden; align-self: flex-start; }
+.seg__item { font: 700 12.5px var(--font-body); border: 0; background: var(--color-field); color: var(--color-text); padding: 4px 11px; cursor: pointer; }
+.seg__item + .seg__item { border-left: var(--line-thin) solid var(--color-border); }
+.seg__item.is-on { background: var(--ink); color: var(--yellow); }
+.seg__item:focus-visible { outline: 3px solid var(--color-focus); outline-offset: -3px; }
+.period__range { font: 600 12px var(--font-mono); color: var(--color-text-muted); }
+.period__form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.period__form input { font: 500 12.5px var(--font-body); border: var(--line-thin) solid var(--color-border); border-radius: var(--radius-sm); padding: 4px 6px; background: var(--color-field); color: var(--color-text); }
+.period__form .btn { font-size: 13px; padding: 4px 10px; }
+
+.hint { position: fixed; top: var(--gutter); right: var(--gutter); z-index: 10; padding: 8px 10px; display: flex; gap: var(--space-2); align-items: center; max-width: min(520px, calc(100vw - 2 * var(--gutter))); }
+.hint__keys { margin: 0 4px 0 0; display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+.hint .btn { font-size: 13px; padding: 5px 10px; }
+.hint .btn--icon { width: 30px; height: 30px; padding: 0; }
+
+.dock { position: fixed; left: var(--gutter); bottom: var(--gutter); z-index: 10; max-height: calc(100vh - 360px); display: flex; flex-direction: column; gap: var(--space-2); }
+.dock__label { font-family: var(--font-display); font-size: 13px; color: var(--yellow); text-shadow: 0 2px 0 var(--ink); letter-spacing: 0.04em; }
+.dock ul { list-style: none; margin: 0; padding: 0 0 6px; display: flex; flex-direction: column; gap: var(--space-2); overflow: auto; }
+.dock__item { display: flex; align-items: center; gap: 10px; font: 600 14px var(--font-body); color: var(--color-text); background: var(--color-surface); border: var(--line) solid var(--color-border); border-radius: 14px; padding: 7px 12px 7px 8px; box-shadow: var(--drop-sm); cursor: pointer; text-align: left; min-width: 170px; white-space: nowrap; }
+.dock__item:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.dock__item.is-here { background: var(--color-primary); }
+.dock__item.is-empty { opacity: 0.55; }
+.dock__dot { width: 22px; height: 22px; border-radius: 50%; border: var(--line) solid var(--color-border); flex: none; }
+.dock__name { overflow: hidden; text-overflow: ellipsis; }
+.dock__n { margin-left: auto; font-family: var(--font-display); font-size: 13px; background: var(--ink); color: var(--yellow); border-radius: 999px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+
+.near { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 10; font-size: 16px; }
+.near:hover:not(:disabled) { transform: translateX(-50%) translateY(-1px); }
+.near:active:not(:disabled) { transform: translateX(-50%) translateY(3px); }
+.near kbd { background: var(--ink); color: var(--yellow); }
+
+.home-banner { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100vw - 2 * var(--gutter))); z-index: 15; overflow: hidden; padding: 0; }
+
+.empty { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; padding: 20px 24px; text-align: center; max-width: min(420px, calc(100vw - 2 * var(--gutter))); }
+.empty h2 { margin: 0 0 6px; font-family: var(--font-display); font-weight: 400; font-size: var(--font-size-lg); }
+.empty p { margin: 4px 0 0; color: var(--color-text-muted); line-height: 1.5; }
+
+@media (max-width: 760px) {
+  .hint__keys { display: none; }
+  .dock { left: 0; right: 0; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); max-height: none; padding: 0 var(--gutter); }
+  .dock__label { display: none; }
+  .dock ul { flex-direction: row; overflow-x: auto; }
+  .dock__item { min-width: auto; }
+  .near { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); font-size: 14px; }
+  .home-banner { bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
+}

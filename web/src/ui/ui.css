@@ -19,6 +19,7 @@
   color: var(--color-text);
   background: var(--color-surface-2);
   transition: transform 0.08s, box-shadow 0.08s;
+  white-space: nowrap;
 }
 .btn:hover:not(:disabled) { transform: translateY(-1px); }
 .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--color-border); }
