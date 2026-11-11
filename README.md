@@ -133,6 +133,7 @@ Q7은 3D안으로 정했다 (2026-11-11). 2.5D안은 제출되지 않았고(전�
 | [docs/adr/](docs/adr/) | 기술 결정 기록 (0001 수집 앱·서버 스택, 0002 웹 스택) |
 | [docs/INTERVIEW.md](docs/INTERVIEW.md) | 사용자 인터뷰 가이드 (**보류** — 이번 일정에 미실행) |
 | [docs/DEMO.md](docs/DEMO.md) | 데모 시나리오, 인수 기준, 성공 기준 측정 방법 |
+| [docs/REHEARSAL.md](docs/REHEARSAL.md) | 리허설 진행표: 준비 명령, 8분 큐시트, 막혔을 때의 대안 |
 | [docs/DESIGN-REVIEW.md](docs/DESIGN-REVIEW.md) | 우주 표현 방식(Q7) 시안 검수 기준·절차·기한 |
 | [site/](site/) | 받는 곳 안내 페이지 (Render에 올리는 유일한 것). 기록·서버는 올리지 않는다 |
 | [GitHub Issues](https://github.com/delightPIP/teamproject/issues) | 작업 이슈 #1~#10 (이슈 1개 = 빅 피처 1개) |
