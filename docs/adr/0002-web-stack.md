@@ -25,6 +25,12 @@
 | 3 | **3D 성능을 직접 다룰 수 있는가** | 별 2,000개 상한과 프레임 수 기준을 개발 C가 1주 차에 재야 한다 (POLICY 3-4, PRD 2장) |
 | 4 | 배우는 비용이 작은가 | 일정이 짧다. 자료가 많은 쪽이 막히는 시간을 줄인다 |
 
+### 환경 제약 (2026-11-11 확인)
+
+개발 B의 윈도우 PC에서 **Windows Application Control 정책이 `@rollup/rollup-win32-x64-msvc`의 `.node` 네이티브 파일 로드를 막았다** (`ERR_DLOPEN_FAILED`). 그래서 `packages/shared` 테스트는 vitest 대신 Node 내장 `node:test`로 바꿨다. Vite도 빌드에 rollup을 쓰므로 같은 PC에서 막힐 수 있다. 대응 후보(직접 확인 필요): `@rollup/wasm-node`로 바꿔 쓰기(`overrides`), 회사·학교 PC의 정책 예외 요청, 해당 팀원은 다른 PC에서 빌드.
+
+> 위 환경 제약은 #13으로 먼저 들어온 ADR 0002 초안(개발 B)에서 옮겼다. 1주 차 초에 팀원 PC 전부에서 `npm create vite` 템플릿이 dev·build 되는지, 막히면 `@rollup/wasm-node` overrides로 되는지 확인한다.
+
 ## 2. 고려한 대안들
 
 **UI 프레임워크**
