@@ -35,10 +35,12 @@ describe("planetPositions", () => {
 });
 
 describe("starOrbit", () => {
-  it("궤도 반지름은 행성 반지름의 1.6 ~ 3.0배, 같은 별은 같은 궤도", () => {
+  it("궤도 반지름은 행성 반지름 + 2.4 ~ 4.2, 기울기 ±0.7, 속도 0.18 ~ 0.38 (DESIGN 8장)", () => {
     for (let i = 0; i < 200; i++) {
       const o = starOrbit(`s${i}`);
-      assert.ok(o.radiusFactor >= 1.6 && o.radiusFactor <= 3.0);
+      assert.ok(o.radiusOffset >= 2.4 && o.radiusOffset <= 4.2);
+      assert.ok(Math.abs(o.tiltX) <= 0.7 && Math.abs(o.tiltZ) <= 0.7);
+      assert.ok(Math.abs(o.speed) >= 0.18 && Math.abs(o.speed) <= 0.38);
     }
     assert.deepEqual(starOrbit("x"), starOrbit("x"));
   });

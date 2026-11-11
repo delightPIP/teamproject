@@ -12,8 +12,8 @@ export interface ToastItem {
   message: string;
 }
 
-/** 3D 쪽(이슈 #3)이 등록하는 자동 비행. 도착하면 resolve 한다. */
-export type FlyHandler = (planetId: string) => Promise<void>;
+/** 3D 쪽(이슈 #3)이 등록하는 자동 비행. 도착하면 true, 이동 키로 멈추면 false (DESIGN 9-4) */
+export type FlyHandler = (planetId: string) => Promise<boolean>;
 
 export interface Store extends WebState {
   auth: "checking" | "ok" | "required";
@@ -22,7 +22,8 @@ export interface Store extends WebState {
   toasts: ToastItem[];
 
   // ── SPEC 2-5 호출 계약 8종 ──
-  flyToPlanet(planetId: string, then?: "openPanel"): Promise<void>;
+  /** 도착하면 true, 사용자가 이동 키로 멈추면 false */
+  flyToPlanet(planetId: string, then?: "openPanel"): Promise<boolean>;
   openPanel(planetId: string): void;
   openStar(starId: string): void;
   closePanel(): void;
@@ -100,17 +101,20 @@ export function createWebStore(navigate: (hash: string) => void = defaultNavigat
       toasts: [],
 
       async flyToPlanet(planetId, then) {
+        let arrived = true;
         if (fly) {
           set({ camera: "flyingTo" });
           try {
-            await fly(planetId);
+            arrived = await fly(planetId);
           } catch {
             // 연출이 실패해도 패널은 연다
           } finally {
-            set({ camera: then === "openPanel" ? "landed" : "flight" });
+            set({ camera: then === "openPanel" && arrived ? "landed" : "flight" });
           }
         }
-        if (then === "openPanel" || !fly) get().openPanel(planetId);
+        // 사용자가 이동 키로 자동 비행을 멈췄으면 패널을 열지 않는다
+        if ((then === "openPanel" && arrived) || !fly) get().openPanel(planetId);
+        return arrived;
       },
 
       openPanel(planetId) {
