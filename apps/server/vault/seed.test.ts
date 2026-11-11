@@ -18,6 +18,7 @@ function check(now: Date) {
   assert.equal(stars.filter((s) => inPeriod(s.createdAtUtc, weekPeriod(now), now)).length, 20, "이번 주 20개");
   assert.ok(stars.filter((s) => inPeriod(s.createdAtUtc, todayPeriod(now), now)).length >= 6, "오늘 6개 이상");
   assert.equal(new Set(stars.map((s) => s.planetId)).size, 4, "행성 4곳");
+  assert.ok(stars.every((s) => s.linkTitle === null && s.thumbnailPath === null), "제목·썸네일 없음 (#48 범위 축소)");
 
   const pick = getTodayPick(v, now);
   assert.equal(pick?.daysAgo, 7, "재발견이 뜬다");
