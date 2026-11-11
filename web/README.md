@@ -1,16 +1,16 @@
 # 로컬 웹
 
-우주 홈, 행성 패널, 별 상세, 탐사선 화면. React + Vite + TypeScript, 상태는 Zustand ([ADR 0002](../docs/adr/0002-web-stack.md), 제안 단계).
+우주 홈, 행성 패널, 별 상세, 탐사선 화면. React(2D) + Three.js(3D) + Vite + TypeScript, 상태는 Zustand ([ADR 0002](../docs/adr/0002-web-stack.md), 제안 단계). 타입·오류 코드·기간 계산은 `@spacelog/shared`를 쓴다.
 
 ## 실행
 
 ```bash
+npm install         # 저장소 루트에서 (npm workspaces)
 cd web
-npm install
-npm run dev:mock    # 목업 API로 실행
+npm run dev:mock    # mocks/api JSON으로 실행
 ```
 
-브라우저에서 `http://localhost:5173/#/?token=dev` 를 연다. 토큰이 없으면 "수집 앱의 [우주 보기]로 다시 열어 주세요" 화면이 나온다. 목업 모드에서는 토큰 값이 무엇이든 통과한다.
+브라우저에서 `http://localhost:5173/#/?token=dev` 를 연다. 토큰이 없으면 "수집 앱의 [우주 보기]로 다시 열어 주세요" 화면이 나온다. 목업 모드에서는 토큰 값이 무엇이든 통과한다. 기록 0건 우주는 `#/?token=dev&mock=empty`.
 
 실제 서버에 붙일 때는 `.env.example`을 `.env`로 복사하고 `API_TARGET`에 서버 주소를 넣은 뒤 `npm run dev`.
 
@@ -18,7 +18,7 @@ npm run dev:mock    # 목업 API로 실행
 | --- | --- |
 | `npm run dev:mock` | 목업 API로 개발 서버 실행 |
 | `npm run dev` | `/api`를 `API_TARGET`으로 넘겨 실행 |
-| `npm test` | 라우터·기간·스토어·API 클라이언트 테스트 |
+| `npm test` | 라우터·스토어·API 클라이언트 테스트 (`node:test`, 루트 `npm test`에도 포함) |
 | `npm run build` | 타입 검사 후 `dist/`로 빌드 |
 
 ## 화면 계약 (`src/state/store.ts`)
@@ -46,6 +46,5 @@ npm run dev:mock    # 목업 API로 실행
 
 ## 임시로 둔 것
 
-- `src/types.ts`, `src/period.ts`: `packages/shared`(#1)가 나오면 지우고 그쪽을 쓴다.
-- `src/api/mock.ts`: `mocks/api/`(#1)가 나오면 그 데이터로 바꾼다. 배포 빌드에는 들어가지 않는다.
 - `src/styles/tokens.css`: 값은 임시. 디자이너 1(#9)이 바꾼다.
+- `src/ui/KindIcon.tsx`: 이모지 아이콘. 디자이너 아이콘이 나오면 바꾼다.
