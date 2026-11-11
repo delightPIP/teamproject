@@ -538,7 +538,7 @@ addEventListener('keydown',e=>{
   if(typing(e)||!inWorld||busy||!$('#confirm').hidden||!$('#modal').hidden)return;
   keys[e.code]=true;
   if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft'].includes(e.code)){
-    autopilot=null; if(mode==='overview'){mode='fly';camDistTarget=9;} $('#help').classList.remove('big');
+    autopilot=null; if(!panelP)clearGuest(); if(mode==='overview'){mode='fly';camDistTarget=9;} $('#help').classList.remove('big');
     if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault();}
   if(e.code==='KeyE'&&nearP)openPanel(nearP);
 });
@@ -563,12 +563,16 @@ function pick(e){
 function flyTo(P,rec){
   const dir=player.position.clone().sub(P.group.position); dir.y=Math.max(dir.y,0); dir.normalize(); if(!isFinite(dir.x))dir.set(0,.3,1).normalize();
   autopilot={P,rec,t:0,from:player.position.clone(),target:P.group.position.clone().add(dir.multiplyScalar(P.r*P.scale+4.5)).add(new V3(0,1.2,0))};
-  closePanel(); mode='fly'; camDistTarget=9; toast(`'${P.name}'(으)로 비행 중…`);
+  closePanel(); mode='fly'; camDistTarget=9;
+  if(rec&&rec.star&&!inPeriod(rec)){guest=rec;rec.star.visible=true;rec.star.material=starMatOn;toast(`${dayDiff(rec.d,today())}일 전 별이라 이 별만 잠시 보여드려요`);}
+  else toast(`'${P.name}'(으)로 비행 중…`);
 }
 
 /* ---------- UI ---------- */
 let inWorld=false, busy=false, skip=false;
 let panelP=null, view='list', detailRec=null, menuOpen=false, renaming=false;
+let guest=null; // 기간 밖인데 재발견으로 들어와 잠시 보여 주는 별
+function clearGuest(){if(!guest)return;const g=guest;guest=null;if(g.star)g.star.visible=inPeriod(g);}
 const checked=new Set(), cargo=new Set();
 const TODAY0='2026-11-11';
 let demo='normal', period='today', range={from:'2026-11-01',to:TODAY0};
@@ -614,7 +618,7 @@ function renderDock(){
 function applyPeriod(auto){
   const total=()=>PLANETS.reduce((a,P)=>a+vis(P).length,0);
   if(auto&&period==='today'&&live()&&!total()){period='week';toast('오늘 별이 없어 이번 주를 보여드려요');}
-  PLANETS.forEach(P=>{P.group.visible=live();P.records.forEach(r=>{if(r.star)r.star.visible=inPeriod(r);});P.targetScale=1+vis(P).length*.035;});
+  PLANETS.forEach(P=>{P.group.visible=live();P.records.forEach(r=>{if(r.star)r.star.visible=inPeriod(r)||r===guest;});P.targetScale=1+vis(P).length*.035;});
   $('#sRec').textContent=total(); $('#sPlanet').textContent=live()?PLANETS.length:0;
   document.querySelectorAll('.seg button').forEach(b=>{b.classList.toggle('on',b.dataset.p===period);b.setAttribute('aria-pressed',b.dataset.p===period);});
   $('#range').hidden=period!=='custom';
@@ -666,16 +670,16 @@ $('#demoSel').onchange=e=>{demo=e.target.value;if(inWorld){closePanel();applyPer
 /* W-02 / W-03 panel */
 const panel=$('#panel');
 function openPanel(P,rec){if(panelP!==P)checked.clear();panelP=P;view=rec?'detail':'list';detailRec=rec||null;menuOpen=false;renaming=false;renderPanel();panel.hidden=false;$('#near').hidden=true;}
-function closePanel(){panel.hidden=true;panelP=null;setSelectedStar();}
+function closePanel(){panel.hidden=true;panelP=null;clearGuest();setSelectedStar();}
 function setSelectedStar(){
-  starMeshes.forEach(s=>s.material=starMat); if(!panelP)return;
+  starMeshes.forEach(s=>s.material=starMat); if(guest&&guest.star)guest.star.material=starMatOn; if(!panelP)return;
   (view==='detail'&&detailRec?[detailRec]:[...checked]).forEach(r=>{if(r.star)r.star.material=starMatOn;});
 }
 function thumb(r,P){
   if(r.type==='image')return `<span class="th" style="background:linear-gradient(135deg,${P.css},#fff 85%)" aria-hidden="true"></span>`;
   return `<span class="th" aria-hidden="true">${ico(r.type==='link'?'link':r.type==='file'?'file-text':'type',17)}</span>`;
 }
-function renderPanel(){const P=panelP;if(!P)return;panel.style.setProperty('--accent',P.deep);(view==='detail'&&detailRec&&P.records.includes(detailRec))?renderDetail(P,detailRec):renderList(P);setSelectedStar();}
+function renderPanel(){const P=panelP;if(!P)return;if(guest&&!(view==='detail'&&detailRec===guest))clearGuest();panel.style.setProperty('--accent',P.deep);(view==='detail'&&detailRec&&P.records.includes(detailRec))?renderDetail(P,detailRec):renderList(P);setSelectedStar();}
 function loadLabel(){return checked.size?`고른 별 ${checked.size}개 탐사선에 싣기`:'행성 전체 탐사선에 싣기';}
 function renderList(P){
   view='list';
