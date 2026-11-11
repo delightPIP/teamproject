@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import type { Planet } from "@spacelog/shared/types";
 import { seeded, type Vec3 } from "./layout.ts";
+import { planetColorToken } from "../ui/planetColor.ts";
 import { cssColor, type Toon } from "./toon.ts";
 
 /** 모형을 이 반지름으로 만들고 spin 그룹 크기로 실제 반지름을 맞춘다 */
@@ -32,7 +33,7 @@ export class PlanetView {
     this.group.add(this.spin);
     this.spin.scale.setScalar(0);
     const rnd = seeded(planet.id);
-    const color = cssColor(planet.colorToken, "#c29bff");
+    const color = cssColor(planetColorToken(planet.colorToken), "#c29bff");
     const dark = color.clone().multiplyScalar(0.72);
     const light = color.clone().lerp(new THREE.Color(0xffffff), 0.45);
 
