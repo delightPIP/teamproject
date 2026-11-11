@@ -7,6 +7,7 @@ import { Button } from "./ui/Button.tsx";
 import { Modal } from "./ui/Modal.tsx";
 import { SidePanel } from "./ui/SidePanel.tsx";
 import { ToastHost } from "./ui/Toast.tsx";
+import { UniverseCanvas } from "./universe/UniverseCanvas.tsx";
 
 /**
  * 웹 껍데기. 화면 자리만 잡는다.
@@ -23,6 +24,7 @@ export function App() {
   return (
     <div className="app">
       <ConnectionBanner />
+      <UniverseCanvas />
       <main className="app__main">
         <HomePlaceholder />
       </main>
