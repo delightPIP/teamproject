@@ -1,0 +1,89 @@
+# ADR 0001: 수집 앱과 로컬 서버의 기술 스택 (PRD Q3)
+
+- **상태**: 제안됨 (Proposed) — 1일 차 스파이크 측정 후 PO·개발 B가 확정
+- **작성 일자**: 2026-11-11
+- **결정 담당**: PO, 개발 B (PRD 6장 공통 약속)
+- **관련 문서**: [PRD 3장·6장·7장 Q3](../PRD.md), [POLICY 1장](../POLICY.md), [SPEC 1-1~1-3, 3-1, 3-2, 5장](../SPEC.md)
+
+## 1. 배경 및 문제 상황
+
+수집 앱(PO)과 로컬 서버(개발 B)를 무엇으로 만들지 정해야 수집 앱 뼈대, 서버 실행·토큰 전달(SPEC 3-1), 기록 넣기(SPEC 3-2)를 시작할 수 있다. 지금 PO 작업 전체와 웹의 서버 연결이 이 결정에 막혀 있다.
+
+수집 앱이 해야 하는 일(SPEC 1-1~1-3):
+- 항상 위에 떠 있는 작은 드롭존 창 (작업 표시줄·Dock 아이콘 없음), 트레이·메뉴바 아이콘
+- **파일·이미지·링크·텍스트** 드래그앤드롭, 붙여넣기, 전역 단축키 → 클립보드 읽기
+- 로컬 서버 실행·재시작, 세션 토큰·포트 관리, 브라우저로 로컬 웹 열기
+- 로그인 시 자동 실행, 설정 창, 디스크 남은 공간 확인
+- 하루 1번 운영체제 알림, **알림 클릭 시 웹을 그 별로 열기**
+
+### 판단 기준 (우선순위 순)
+
+| # | 기준 | 왜 중요한가 |
+| --- | --- | --- |
+| 1 | **윈도우에서 파일과 링크·텍스트 드롭이 모두 되는가** | 모으기가 핵심 축이고 줄이지 않는 범위다 (PRD 3장). 윈도우 트레이는 드롭을 못 받는다 (PRD 8장) |
+| 2 | **팀이 일정 안에 만들 수 있는가** | 개발 3명 + PO가 개발을 겸한다. 서버는 개발 B가 TypeScript로 쓴다는 가정이 SPEC 5장에 있다 |
+| 3 | **가벼운가** (앱 + 서버의 실행 시간, 대기 메모리) | 성공 기준 "수집 앱이 가볍다". 수치는 이 ADR의 측정으로 정한다 (PRD 2장) |
+| 4 | 알림 클릭, 자동 실행, 전역 단축키, 트레이가 맥·윈도우 둘 다 되는가 | 재발견(핵심 축)의 입구가 알림 클릭이다 |
+| 5 | 설치 파일 크기 | 참고 지표. 배포 범위가 데모·인터뷰라 우선순위는 낮다 |
+
+> 기준 1의 원본 경로 문제: SPEC 3-2는 원본을 `multipart`로 서버에 올리고 서버가 보관함에 복사한다. 따라서 수집 앱은 **원본의 절대 경로가 없어도** 된다. 드롭된 파일 내용과 이름(`File.name`)만 있으면 된다. 이 점이 아래 Tauri 평가에 영향을 준다.
+
+## 2. 고려한 대안들
+
+| 후보 | 장점 | 단점 / 위험 |
+| :--- | :--- | :--- |
+| **A. Electron + TypeScript 서버를 앱 안에서 실행** (main 또는 `utilityProcess`) | 수집 앱·서버·웹이 모두 TypeScript 하나. 런타임이 하나라 서버를 별도로 묶을 필요가 없다. 드롭은 웹 표준 이벤트로 파일·링크·텍스트를 다 받는다. 알림 클릭(`Notification` `click`), 자동 실행(`app.setLoginItemSettings`), 전역 단축키, 트레이가 기본 API에 있다. 자료와 예제가 가장 많다 | 대기 메모리와 설치 파일이 크다. 공개 측정값 편차가 크다: 대기 메모리 Electron 128MB vs Tauri 109MB([Better Stack](https://betterstack.com/community/guides/scaling-nodejs/tauri-vs-electron-vs-deno-vs-electrobun/)) ~ 창 6개 기준 409MB vs 172MB([Hopp](https://dev.to/gethopp/tauri-vs-electron-performance-bundle-size-and-the-real-trade-offs-1el4)). 설치 파일 약 100~300MB |
+| **B. Tauri v2 + TypeScript 서버를 Node 사이드카로 실행** | 수집 앱 껍데기가 가볍다. 서버 코드는 A와 같은 TypeScript | 서버를 돌리려면 Node 런타임을 실행 파일로 묶어(`bun build --compile`, `@yao-pkg/pkg` 등) 별도 프로세스로 띄워야 한다([사이드카 패턴](https://stuffbucket.github.io/skills/catalog/tauri-sidecar-node-sidecar/)). **Node 프로세스가 하나 더 떠서 A와의 메모리 차이가 줄어든다** (측정값은 찾지 못함 → 스파이크에서 잰다). 윈도우에서 기본 드롭 처리(`dragDropEnabled: true`)는 웹 표준 드래그 이벤트를 가로챈다. 끄면 웹 표준 드롭이 되지만 절대 경로를 잃는다. 둘을 동시에 쓸 수 없다([정리 글](https://wyhinton.github.io/2026/01/14/Tauri-DragAndDrop-Issues)). 위 1장의 이유로 경로는 필요 없지만, 링크·텍스트 드롭이 되는지는 **직접 확인 필요**. 설정은 `tauri.conf.json`에 적어야 적용된다는 보고가 있다. 알림 클릭 이벤트의 데스크톱 지원은 버전에 따라 다르다(최신 changelog에 `onAction`으로 전달된다는 항목이 있음, [changelog](https://v2.tauri.app/release/notification/all-versions/)) → **직접 확인 필요**. 팀 누군가 Rust 설정·플러그인을 다뤄야 한다 |
+| **C. Tauri v2 + Rust 서버 (앱 안에서 실행)** | 가장 가볍다. 프로세스 하나 | 개발 B의 서버(보관함, API, 썸네일, 링크 정보, 보안)를 Rust로 써야 한다. 범위가 가장 넓은 사람(PRD 6장)에게 언어 학습까지 얹는다. `packages/shared` 타입을 Rust와 TS로 이중 관리해야 한다 |
+| D. 맥·윈도우 각각 네이티브 (Swift / C#) | 가장 가볍고 운영체제와 가장 잘 맞는다 | 같은 앱을 두 번 만든다. PO 1명이 감당할 수 없다. **기각** |
+
+## 3. 최종 결정 (제안) 및 이유
+
+- 이 초안은 **A. Electron + TypeScript 서버**를 제안한다. 단, 1일 차 스파이크에서 B를 함께 재보고, 아래 "바뀌는 조건"에 해당하면 B로 바꾼다.
+- **제안 이유**:
+  1. **기준 1·4를 확실히 만족한다.** 드롭(파일·링크·텍스트), 알림 클릭, 자동 실행, 전역 단축키가 모두 기본 API로 맥·윈도우에서 된다. B는 드롭과 알림 클릭 두 곳이 확인 필요 상태다. 둘 다 줄일 수 없는 핵심 축(모으기, 재발견)이다.
+  2. **기준 2: 언어 하나, 런타임 하나.** 서버를 앱 안에서 바로 돌리므로 사이드카 묶기·서명·경로 문제가 없다. 개발 B와 PO가 같은 코드베이스에서 서로 도울 수 있다.
+  3. **기준 3: 서버가 TypeScript인 이상 Tauri의 가벼움 이점이 작아진다.** Tauri가 가벼운 건 Node를 싣지 않기 때문인데, B는 Node를 결국 싣는다. 가벼움을 정말 얻으려면 C(Rust 서버)로 가야 하고, 그 비용은 기준 2와 부딪힌다.
+- **바뀌는 조건** (스파이크 결과 다음 중 하나면 B로 간다):
+  - A의 대기 메모리(앱 + 서버 합계)가 B보다 **100MB 이상** 크다
+  - A의 실행 시간(아이콘 클릭 → 드롭존 표시 + `/api/health` 응답)이 B보다 **1초 이상** 느리다
+  - 그리고 B에서 윈도우 링크·텍스트 드롭과 알림 클릭이 둘 다 된다
+
+## 4. 1일 차 스파이크 (반나절, PO·개발 B)
+
+두 후보로 같은 최소 앱을 만든다: 드롭존 창 1개 + 트레이 + `GET /api/health`만 있는 TypeScript 서버.
+
+| # | 확인 항목 | A | B | 통과 조건 |
+| --- | --- | --- | --- | --- |
+| 1 | 윈도우: 탐색기 파일 드롭 → 파일 이름·내용을 `multipart`로 서버에 전송 | | | 된다 |
+| 2 | 윈도우: 브라우저에서 링크·선택한 텍스트 드롭 | | | `text/uri-list`·`text/plain`을 받는다 |
+| 3 | 맥: 1·2 동일 | | | 된다 |
+| 4 | 알림 클릭 → 콜백에서 URL 열기 (맥·윈도우) | | | 된다 |
+| 5 | 대기 메모리 (앱 + 서버 프로세스 합계, 시작 1분 후) | | | 기록 |
+| 6 | 실행 시간 (클릭 → 드롭존 표시 + health 응답) | | | 기록 |
+| 7 | 설치 파일 크기 | | | 기록 (참고) |
+
+측정 환경: 팀원의 일반 노트북 1대씩(맥 1, 윈도우 1). 결과를 이 표에 채우고 상태를 "채택됨"으로 바꾼다.
+
+## 5. 예상되는 결과 및 영향
+
+- **긍정적 영향**
+  - 수집 앱, 서버, 웹, `packages/shared`가 TypeScript 하나로 통일된다 (SPEC 5장 폴더 구성 그대로).
+  - 서버 실행·토큰 전달(SPEC 3-1)을 프로세스 간 통신 없이 같은 런타임에서 처리할 수 있다.
+- **주의할 점**
+  - **"가벼움" 목표 수치는 스파이크 측정값을 기준으로 정한다.** 제안: A 채택 시 대기 메모리 앱 + 서버 합계 250MB 이하, 실행 시간 3초 이하 (PO가 1주 차에 확정, PRD 2장).
+  - 서버는 `utilityProcess`로 분리하는 것을 권한다. 서버가 죽어도 드롭존이 살아 있어야 "1번 자동 재시작 → 실패 시 트레이 빨간 점"(SPEC 3-1, POLICY 3장)을 구현할 수 있다.
+  - 렌더러(드롭존)는 `contextIsolation` 켜기, `nodeIntegration` 끄기, `preload`로 필요한 함수만 노출한다. 로컬 웹은 Electron 창이 아니라 **사용자 브라우저**로 연다 (SPEC 3-3). 앱 안에 웹 화면을 띄우지 않는다.
+  - 서버의 보안 규칙(127.0.0.1 바인딩, Host·Origin·토큰 검사, CORS 없음)은 스택과 무관하게 그대로 지킨다 (POLICY 1장).
+  - 네이티브 모듈(예: SQLite 드라이버, 썸네일용 이미지 라이브러리)은 Electron 버전에 맞춰 다시 빌드해야 한다. 개발 B는 Q9와 함께 고를 때 이 점을 본다.
+  - 웹 스택(Q9)은 이 결정과 따로 개발 B·C가 정한다.
+
+## 6. 참고 자료
+
+- Hopp, Tauri vs Electron 성능 비교 — https://dev.to/gethopp/tauri-vs-electron-performance-bundle-size-and-the-real-trade-offs-1el4
+- Better Stack, Tauri vs Electron vs Deno vs Electrobun — https://betterstack.com/community/guides/scaling-nodejs/tauri-vs-electron-vs-deno-vs-electrobun/
+- Tauri 윈도우 드래그앤드롭 문제 정리 — https://wyhinton.github.io/2026/01/14/Tauri-DragAndDrop-Issues
+- Tauri Node 사이드카 패턴 — https://stuffbucket.github.io/skills/catalog/tauri-sidecar-node-sidecar/
+- Tauri 알림 플러그인 changelog — https://v2.tauri.app/release/notification/all-versions/
+
+> 공개 벤치마크는 측정 방법이 제각각이라 서로 크게 다르다. 결정은 4장의 우리 측정값으로 한다.
