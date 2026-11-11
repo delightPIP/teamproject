@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "web"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"packages/**/*.test.ts\" \"mocks/**/*.test.ts\""
+    "test": "node --test \"packages/**/*.test.ts\" \"mocks/**/*.test.ts\" \"web/src/**/*.test.ts\""
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

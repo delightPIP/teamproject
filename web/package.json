@@ -1,5 +1,5 @@
 {
-  "name": "space-archive-web",
+  "name": "@spacelog/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,20 +7,19 @@
     "dev": "vite",
     "dev:mock": "vite --mode mock",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run",
+    "test": "node --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "zustand": "^5.1.0"
+    "zustand": "^5.1.0",
+    "@spacelog/shared": "*"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.8",
-    "vitest": "^4.1.12"
+    "vite": "^8.3.8"
   }
 }

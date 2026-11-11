@@ -1,5 +1,2 @@
-node_modules/
-dist/
-.env*
-!.env.example
+# 루트 .gitignore 가 .env* 를 막는다. 목업 모드 설정은 비밀이 아니라서 올린다
 !.env.mock
