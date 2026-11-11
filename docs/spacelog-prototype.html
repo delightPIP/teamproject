@@ -1,0 +1,1045 @@
+<title>spaceLog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* Layout: full-screen WebGL space + chunky "arcade" HUD cards with thick ink outlines and drop-step shadows */
+:root{
+  --ink:#1a1430; --space:#15103a; --panel:#f4f2ff; --panel2:#e6e2ff;
+  --yellow:#ffd23f; --pink:#ff5d8f; --violet:#7a6cff; --mute:#5b5480; --sky:#5ec8ff;
+  --f-display:"Black Han Sans","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"Pretendard Variable",Pretendard,"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--space);color:var(--panel);font-family:var(--f-body)}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage canvas:active{cursor:grabbing}
+.card{background:var(--panel);color:var(--ink);border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink)}
+.btn{font-family:var(--f-display);font-size:15px;letter-spacing:.02em;border:3px solid var(--ink);border-radius:12px;background:var(--yellow);color:var(--ink);padding:8px 14px;box-shadow:0 4px 0 var(--ink);cursor:pointer;transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn:focus-visible,.dock button:focus-visible,.rec:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.violet{background:var(--violet);color:#fff}
+.btn.ghost{background:var(--panel2)}
+
+/* top-left brand */
+#brand{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:calc(14px + env(safe-area-inset-left,0px));padding:12px 16px;display:flex;flex-direction:column;gap:6px;max-width:min(300px,calc(100vw - 28px))}
+#brand h1{margin:0;font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1;letter-spacing:.01em}
+#brand h1 span{color:var(--violet)}
+#brand p{margin:0;font-size:12.5px;color:var(--mute);line-height:1.45}
+#brand .stats{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700}
+#brand .stats b{background:var(--ink);color:var(--yellow);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums}
+#brand .btn{font-size:13px;padding:6px 10px;align-self:flex-start;margin-top:2px}
+
+/* help */
+#help{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));padding:8px 12px;font-size:12px;display:flex;gap:10px;flex-wrap:wrap;max-width:420px;justify-content:flex-end}
+#help kbd{font-family:var(--f-mono);font-size:11px;background:var(--ink);color:var(--panel);border-radius:5px;padding:1px 6px;margin-right:3px}
+
+/* dock */
+#dock{position:fixed;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(90px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px}
+#dock .label{font-family:var(--f-display);font-size:13px;color:var(--yellow);text-shadow:0 2px 0 var(--ink);letter-spacing:.04em}
+.dock button{display:flex;align-items:center;gap:10px;font:600 14px var(--f-body);color:var(--ink);background:var(--panel);border:3px solid var(--ink);border-radius:14px;padding:7px 12px 7px 8px;box-shadow:0 4px 0 var(--ink);cursor:pointer;text-align:left;min-width:170px;white-space:nowrap}
+.dock button .dot{width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);flex:none}
+.dock button .n{margin-left:auto;font-family:var(--f-display);font-size:13px;background:var(--ink);color:var(--yellow);border-radius:999px;padding:1px 8px;font-variant-numeric:tabular-nums}
+.dock button.here{background:var(--yellow)}
+
+
+/* near prompt */
+#near{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));font-size:16px}
+#near kbd{font-family:var(--f-mono);background:var(--ink);color:var(--yellow);border-radius:6px;padding:1px 7px;margin-right:6px}
+
+/* panel */
+#panel{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 28px));display:flex;flex-direction:column;overflow:hidden;animation:pop .22s cubic-bezier(.3,1.5,.6,1)}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+#panel header{padding:16px 16px 12px;display:flex;gap:12px;align-items:center;border-bottom:3px solid var(--ink)}
+#panel .planet-ico{width:46px;height:46px;border-radius:50%;border:3px solid var(--ink);flex:none;box-shadow:inset -8px -8px 0 rgba(0,0,0,.18)}
+#panel h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:24px;line-height:1.05}
+#panel .sub{font-size:12.5px;color:var(--mute);margin-top:3px}
+#panel .x{margin-left:auto;align-self:flex-start;width:34px;height:34px;padding:0;font-size:18px;background:var(--panel2)}
+#panel .body{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px;min-height:0}
+#panel .eyebrow{font-family:var(--f-display);font-size:12px;color:var(--violet);letter-spacing:.06em}
+.recs{display:flex;flex-direction:column;gap:7px}
+.rec{display:flex;gap:10px;align-items:center;text-align:left;font:600 14px var(--f-body);color:var(--ink);background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:8px 10px;cursor:pointer}
+.rec .s{color:#e0a800;font-size:16px;flex:none;-webkit-text-stroke:1px var(--ink)}
+.rec .d{margin-left:auto;font:500 11.5px var(--f-mono);color:var(--mute);flex:none;font-variant-numeric:tabular-nums}
+.rec .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec.on{background:var(--yellow)}
+.rec.new{animation:flash 1.2s}
+@keyframes flash{0%,40%{background:var(--pink);color:#fff}}
+.detail{background:var(--panel2);border:2.5px dashed var(--ink);border-radius:12px;padding:12px;font-size:14px;line-height:1.6}
+.detail h3{margin:0 0 4px;font-size:15px}
+.detail .tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.detail .tags span{font:600 11.5px var(--f-mono);background:var(--ink);color:var(--panel);border-radius:6px;padding:1px 7px}
+.add{display:flex;gap:6px}
+.add input{flex:1;min-width:0;border:2.5px solid var(--ink);border-radius:10px;padding:8px 10px;font:500 14px var(--f-body);background:#fff;color:var(--ink)}
+#panel footer{padding:12px 16px 16px;border-top:3px solid var(--ink);display:flex;flex-direction:column;gap:8px;background:var(--panel2)}
+#panel footer .row{display:flex;gap:8px}
+#panel footer .row .btn{flex:1}
+#panel footer small{color:var(--mute);font-size:11.5px}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(10,6,30,.6);display:grid;place-items:center;padding:16px}
+#modal .card{width:min(640px,100%);max-height:min(80vh,720px);display:flex;flex-direction:column;overflow:hidden}
+#modal .top{padding:14px 16px;display:flex;gap:10px;align-items:center;border-bottom:3px solid var(--ink);flex-wrap:wrap}
+#modal h3{margin:0;font-family:var(--f-display);font-weight:400;font-size:20px}
+.tabs{display:flex;gap:6px;margin-left:auto}
+.tabs button{font:700 13px var(--f-body);border:2.5px solid var(--ink);border-radius:999px;padding:5px 12px;background:#fff;color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--ink);color:var(--yellow)}
+#modal pre{margin:0;padding:16px;overflow:auto;flex:1;font:13px/1.6 var(--f-mono);background:#fff;color:var(--ink);white-space:pre-wrap;word-break:break-word;min-height:0}
+#modal .bot{padding:12px 16px;display:flex;gap:8px;align-items:center;border-top:3px solid var(--ink);background:var(--panel2);flex-wrap:wrap}
+#modal .bot small{color:var(--mute);font-size:12px;flex:1;min-width:180px}
+
+#toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);padding:9px 16px;font-weight:700;font-size:14px;background:var(--yellow);pointer-events:none;white-space:nowrap;max-width:calc(100vw - 28px);overflow:hidden;text-overflow:ellipsis}
+
+/* layers */
+#stage{z-index:1}
+#brand,#help,#dock,#near,#panel{z-index:2}
+#modal{z-index:40}
+#toast{z-index:50}
+#brand .brow{display:flex;gap:6px;flex-wrap:wrap}
+
+/* W-00 home */
+#home{position:fixed;inset:0;z-index:20;overflow-y:auto;overflow-x:hidden;background:radial-gradient(ellipse at 50% 28%,#2c2070 0%,var(--space) 62%);color:var(--panel)}
+.home-stars{position:absolute;inset:0;pointer-events:none}
+.hstar{position:absolute;border-radius:50%;opacity:.85}
+.home-wrap{position:relative;max-width:1040px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
+.home-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.home-top .logo{font-family:var(--f-display);font-size:24px;padding:8px 14px;line-height:1}
+.home-top .logo span{color:var(--violet)}
+.hero{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.hero h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4vw,38px);line-height:1.15;text-shadow:0 3px 0 var(--ink);text-wrap:balance}
+.hero h2 em{font-style:normal;color:var(--yellow)}
+.hstats{display:flex;gap:8px;font-weight:700;font-size:13px;align-items:center}
+.hstats b{background:var(--ink);color:var(--yellow);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums;border:2px solid #3a2f6a}
+.bh-wrap{position:relative;width:300px;height:300px;max-width:80vw;max-height:80vw;display:grid;place-items:center;margin:-8px 0}
+#bhCanvas{position:absolute;inset:0;width:100%;height:100%}
+#enterBtn{position:relative;font-size:18px;padding:12px 20px;box-shadow:0 5px 0 var(--ink)}
+.hero .hint{margin:0;font-size:13px;color:#b9b3e6}
+.home-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.hcard{padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.hcard .eyebrow{font-family:var(--f-display);font-size:12px;color:var(--violet);letter-spacing:.06em}
+.hcard h3{margin:0;font-size:16px;line-height:1.35}
+.hcard p{margin:0;font-size:13.5px;line-height:1.6;color:var(--mute)}
+.hcard .btn{align-self:flex-start;display:flex;align-items:center;gap:8px;font-size:14px}
+.hlist{display:flex;flex-direction:column;gap:7px}
+.pdot{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--ink);flex:none}
+.rec .n2{margin-left:auto;font-family:var(--f-display);font-size:12px;background:var(--ink);color:var(--yellow);border-radius:999px;padding:1px 8px;font-variant-numeric:tabular-nums}
+
+/* transition veil */
+#veil{position:fixed;inset:0;background:var(--ink);z-index:30;display:grid;place-items:center}
+#veil .ring{width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--yellow),var(--pink),var(--violet),var(--yellow));-webkit-mask:radial-gradient(circle,transparent 16px,#000 17px);mask:radial-gradient(circle,transparent 16px,#000 17px);animation:spin .8s linear infinite;opacity:0;transition:opacity .2s}
+#veil.waiting .ring{opacity:1}
+@keyframes spin{to{transform:rotate(1turn)}}
+
+/* W-01 additions */
+.badge{font-family:var(--f-display);font-size:12px;background:var(--ink);color:var(--yellow);border-radius:999px;padding:1px 8px;font-variant-numeric:tabular-nums;min-width:22px;text-align:center;display:inline-block}
+#hProbe,#probeBtn{display:flex;align-items:center;gap:8px}
+#period{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);padding:5px;display:flex;gap:6px;align-items:center;z-index:2;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 28px)}
+.seg{display:flex;gap:4px}
+.seg button{font:700 13px var(--f-body);border:0;border-radius:999px;padding:6px 12px;background:transparent;color:var(--ink);cursor:pointer}
+.seg button:hover{background:var(--panel2)}
+.seg button.on{background:var(--ink);color:var(--yellow)}
+.seg button:focus-visible{outline:3px solid var(--sky);outline-offset:1px}
+.range{display:flex;gap:4px;align-items:center;font-size:12px;padding-right:4px}
+.range input{font:500 12px var(--f-mono);border:2px solid var(--ink);border-radius:8px;padding:3px 5px;background:#fff;color:var(--ink)}
+#help .ht{display:none;font-family:var(--f-display);font-weight:400;font-size:14px}
+#help .keys{display:flex;gap:10px;flex-wrap:wrap}
+#help.big{flex-direction:column;align-items:flex-start;padding:12px 14px;font-size:13px;gap:8px}
+#help.big .ht{display:block}
+#help.big .keys{display:grid;grid-template-columns:repeat(2,auto);gap:6px 16px}
+#probeBtn{position:fixed;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;font-size:16px;padding:10px 16px}
+#probeBtn.bump{animation:bump .4s}
+@keyframes bump{40%{transform:scale(1.12)}}
+#redis{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 14px;width:max-content;max-width:min(520px,calc(100vw - 440px))}
+#redis .tx{min-width:0;display:flex;flex-direction:column}
+#redis .eyebrow{font-family:var(--f-display);font-size:11.5px;color:var(--violet);letter-spacing:.05em}
+#redis b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#redis .btn{font-size:13px;padding:6px 10px;flex:none}
+#worldMsg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;padding:20px 22px;width:min(380px,calc(100vw - 32px));display:flex;flex-direction:column;gap:10px;text-align:center;align-items:center;box-sizing:border-box}
+#worldMsg h3{margin:0;font-size:16px;line-height:1.5}
+#worldMsg .eyebrow,#hState .eyebrow{font-family:var(--f-display);font-size:12px;color:var(--violet);letter-spacing:.06em}
+#hState{max-width:460px;width:100%;margin:24px auto 0;align-items:center;text-align:center;padding:24px;box-sizing:border-box}
+#hState h3{font-size:17px;line-height:1.5}
+#demo{position:fixed;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;gap:6px;align-items:center;padding:4px 6px 4px 10px;font:700 11.5px var(--f-body);border-style:dashed;box-shadow:none}
+#demo select{font:600 12px var(--f-body);border:2px solid var(--ink);border-radius:8px;padding:3px 4px;background:#fff;color:var(--ink)}
+.btn:disabled{background:var(--panel2);color:var(--mute);box-shadow:none;cursor:not-allowed;transform:none}
+
+/* W-02 / W-03 */
+#panel .hd{min-width:0;flex:1}
+#panel .x{margin-left:0;flex:none}
+#panel h2.h2s{font-size:19px;line-height:1.25;overflow-wrap:anywhere}
+.ic{border:0;background:transparent;font-size:15px;cursor:pointer;color:var(--mute);padding:2px 5px;border-radius:6px;vertical-align:3px}
+.ic:hover{background:var(--panel2);color:var(--ink)}
+.ic:focus-visible{outline:3px solid var(--sky)}
+#pRenameIn{font:400 20px var(--f-display);width:100%;box-sizing:border-box;border:2.5px solid var(--ink);border-radius:10px;padding:3px 8px;background:#fff;color:var(--ink)}
+.menu{display:flex;flex-direction:column;border-bottom:3px solid var(--ink);background:var(--panel2)}
+.menu button{font:600 14px var(--f-body);text-align:left;padding:10px 16px;border:0;border-top:1.5px dashed #b7b0e0;background:transparent;color:var(--ink);cursor:pointer}
+.menu button:first-child{border-top:0}
+.menu button:hover:not(:disabled){background:var(--yellow)}
+.menu button:disabled{color:#9a94bd;cursor:not-allowed}
+.lbl{font-family:var(--f-display);font-size:12px;color:var(--violet);letter-spacing:.06em}
+.rec.row{padding:4px 6px 4px 10px;gap:8px;cursor:default}
+.rec.row input{width:18px;height:18px;accent-color:var(--violet);flex:none;margin:0;cursor:pointer}
+.recb{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:transparent;font:inherit;color:inherit;text-align:left;padding:4px 2px;cursor:pointer;border-radius:8px}
+.recb:focus-visible{outline:3px solid var(--sky)}
+.th{width:34px;height:34px;flex:none;border:2.5px solid var(--ink);border-radius:8px;background:var(--panel2);display:grid;place-items:center;font:700 9.5px var(--f-mono);color:var(--ink);overflow:hidden;box-sizing:border-box}
+.empty{border:2.5px dashed #b7b0e0;border-radius:12px;padding:18px;text-align:center;color:var(--mute);font-size:13.5px;line-height:1.6}
+#panel footer .btn{width:100%}
+.pv{border:2.5px solid var(--ink);border-radius:12px;overflow:hidden;flex:none}
+.pv.img{aspect-ratio:4/3;max-width:100%;display:flex;align-items:flex-end;padding:10px;box-sizing:border-box}
+.pv.img span{background:#fff;border:2px solid var(--ink);border-radius:6px;padding:1px 6px;font:600 12px var(--f-mono)}
+.pv.file{display:flex;gap:12px;align-items:center;padding:14px;background:#fff}
+.pv.file .fi{width:52px;height:62px;border:2.5px solid var(--ink);border-radius:8px 18px 8px 8px;background:var(--yellow);display:grid;place-items:center;font:700 12px var(--f-mono);flex:none}
+.pv.file b,.pv.link b{display:block;font-size:14px;overflow-wrap:anywhere}
+.pv small{font:500 12px var(--f-mono);color:var(--mute);overflow-wrap:anywhere}
+.pv.link{padding:14px;background:#fff;display:flex;flex-direction:column;gap:4px}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13px}
+.meta dt{color:var(--mute)}
+.meta dd{margin:0;font-weight:600}
+.meta dd.mono{font-family:var(--f-mono);font-weight:500;font-variant-numeric:tabular-nums}
+#memo{width:100%;box-sizing:border-box;border:2.5px solid var(--ink);border-radius:10px;padding:8px 10px;font:500 14px/1.55 var(--f-body);resize:vertical;background:#fff;color:var(--ink);margin-top:-6px}
+#memo:focus-visible,.mv select:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.st{font-size:11.5px;color:var(--mute);margin-top:-8px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts .btn{font-size:13px;padding:6px 10px}
+.mv{display:flex;gap:10px;align-items:center;font-size:13px;font-weight:600}
+.mv select{flex:1;min-width:0;font:600 13px var(--f-body);border:2.5px solid var(--ink);border-radius:10px;padding:6px 8px;background:#fff;color:var(--ink)}
+.linkdel{align-self:flex-start;border:0;background:transparent;color:#c2185b;font:700 13px var(--f-body);cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+
+/* W-04 */
+.cargo{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;border-bottom:3px solid var(--ink);max-height:132px;overflow:auto;background:var(--panel2)}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--f-body);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 4px 3px 8px;max-width:100%;color:var(--ink);box-sizing:border-box}
+.chip .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.chip button{border:0;background:var(--panel2);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;color:var(--ink);flex:none;padding:0}
+.chip.add{cursor:pointer;background:var(--yellow);padding:3px 10px;font-weight:700}
+.chip .pdot{width:12px;height:12px;border-width:2px}
+.privacy{margin:0;padding:8px 16px;font-size:12.5px;font-weight:600;background:#fff4c2;color:var(--ink);border-top:2px dashed var(--ink)}
+#modal .bot .sp{flex:1}
+
+/* merged from the other design doc */
+body{word-break:keep-all}
+.card{color-scheme:light}
+.btn,kbd,.seg button,.tabs button{white-space:nowrap}
+.i{flex:none;vertical-align:-3px}
+.btn.x{display:grid;place-items:center;position:relative}
+.btn.x::after,.ic::after,.chip button::after{content:"";position:absolute;inset:-6px}
+.ic{position:relative;display:inline-grid;place-items:center;width:32px;height:32px;vertical-align:-6px}
+.chip button{position:relative;display:grid;place-items:center}
+.chip button::after{inset:-12px -6px}
+.ck{display:grid;place-items:center;width:34px;height:44px;margin:-4px 0 -4px -8px;cursor:pointer;flex:none}
+.th{color:var(--ink)}
+.na{color:#8a84ad}
+#panel{--accent:var(--violet)}
+#panel .lbl{color:var(--accent)}
+#panel .rec.row input{accent-color:var(--accent)}
+#panel .rec.on{background:color-mix(in srgb,var(--accent) 16%,#fff);border-color:var(--accent)}
+#panel *:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#panel .planet-ico{box-shadow:inset -8px -8px 0 rgba(0,0,0,.18),0 0 0 3px var(--panel),0 0 0 6px var(--accent)}
+
+/* confirm */
+#confirm{position:fixed;inset:0;z-index:45;background:rgba(10,6,30,.6);display:grid;place-items:center;padding:16px}
+#confirm .card{width:min(400px,100%);padding:18px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+#confirm h3{margin:0;font-size:17px;line-height:1.4;overflow-wrap:anywhere}
+#confirm p{margin:0;font-size:13.5px;color:var(--mute);line-height:1.6}
+#confirm .row{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+#confirm input,#confirm select{font:600 14px var(--f-body);border:2.5px solid var(--ink);border-radius:10px;padding:8px 10px;background:#fff;color:var(--ink);width:100%;box-sizing:border-box}
+.btn.yellow{background:var(--yellow);color:var(--ink)}
+
+@media (max-width:760px){
+  #period{top:auto;bottom:calc(136px + env(safe-area-inset-bottom,0px))}
+  #redis{display:none}
+  #near{bottom:calc(190px + env(safe-area-inset-bottom,0px))}
+  .home-grid{grid-template-columns:minmax(0,1fr)}
+  .bh-wrap{width:250px;height:250px}
+  #help{display:none}
+  #brand p{display:none}
+  #dock{flex-direction:row;left:0;right:0;bottom:calc(80px + env(safe-area-inset-bottom,0px));overflow-x:auto;padding:4px 14px 8px}
+  #dock .label{display:none}
+  .dock button{min-width:auto}
+  #near{font-size:14px}
+  #panel{top:auto;left:calc(10px + env(safe-area-inset-left,0px));right:calc(10px + env(safe-area-inset-right,0px));width:auto;height:62vh;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:4}
+}
+@media (prefers-reduced-motion:reduce){#panel{animation:none}.rec.new{animation:none}}
+</style>
+
+<div id="stage"></div>
+
+<div id="veil" hidden><div class="ring"></div></div>
+
+<section id="home" aria-label="메인 홈">
+  <div class="home-stars" aria-hidden="true"></div>
+  <div class="home-wrap">
+    <header class="home-top">
+      <div class="logo card" data-suck>space<span>Log</span></div>
+      <button class="btn violet" id="hProbe" data-suck><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> 탐사선 <span class="badge" id="hCargoN">0</span></button>
+    </header>
+    <div class="hero">
+      <h2 id="hGreet" data-suck></h2>
+      <div class="hstats" id="hStats" data-suck></div>
+      <div class="bh-wrap"><canvas id="bhCanvas" aria-hidden="true"></canvas><button class="btn violet" id="enterBtn">우주로 들어가기</button></div>
+      <p class="hint" data-suck>버튼을 누르면 블랙홀을 지나 내 우주로 들어갑니다</p>
+    </div>
+    <div class="home-grid">
+      <article class="card hcard" id="hRedis" data-suck></article>
+      <article class="card hcard" data-suck><div class="eyebrow">행성으로 바로 들어가기</div><div class="hlist" id="hPlanets"></div></article>
+      <article class="card hcard" data-suck><div class="eyebrow">최근 별</div><div class="hlist" id="hRecent"></div></article>
+    </div>
+    <article class="card hcard" id="hState" hidden></article>
+  </div>
+</section>
+
+<div id="brand" class="card" hidden>
+  <h1>space<span>Log</span></h1>
+  <div class="stats"><span>이 기간</span><b id="sRec">0</b>개의 별 <b id="sPlanet">0</b>개의 행성</div>
+  <div class="brow"><button class="btn ghost" id="goHome">← 홈</button></div>
+</div>
+
+<div id="period" class="card" hidden>
+  <div class="seg" role="group" aria-label="기간 선택"><button type="button" data-p="today">오늘</button><button type="button" data-p="week">이번 주</button><button type="button" data-p="custom">직접 지정</button></div>
+  <div class="range" id="range" hidden><input type="date" id="rFrom" aria-label="시작 날짜"><span>~</span><input type="date" id="rTo" aria-label="끝 날짜"></div>
+</div>
+
+<div id="help" class="card big" hidden>
+  <b class="ht">처음이라면, 이렇게 날아요</b>
+  <div class="keys"><span><kbd>WASD</kbd>비행</span><span><kbd>Space</kbd><kbd>Shift</kbd>상승·하강</span><span><kbd>드래그</kbd>시점</span><span><kbd>E</kbd>착륙</span></div>
+</div>
+
+<div id="dock" class="dock" hidden><div class="label">행성으로 바로 날아가기</div></div>
+
+<button id="near" class="btn" hidden></button>
+
+<div id="redis" class="card" hidden></div>
+
+<button id="probeBtn" class="btn violet" hidden><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> 탐사선 <span class="badge" id="cargoN">0</span></button>
+
+<div id="worldMsg" class="card" hidden></div>
+
+<aside id="panel" class="card" hidden aria-live="polite"></aside>
+
+<div id="modal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="top">
+      <h3 id="mTitle">탐사선</h3><span class="badge" id="mN">0</span>
+      <div class="tabs"><button data-f="claude" class="on">Claude 프롬프트</button><button data-f="mcp">MCP 리소스</button></div>
+    </div>
+    <div class="cargo" id="mCargo"></div>
+    <pre id="mOut"></pre>
+    <p class="privacy">복사한 내용만 밖으로 나가요. 붙여넣기 전에 확인해 주세요.</p>
+    <div class="bot">
+      <button class="btn ghost" id="mClear">비우기</button><span class="sp"></span>
+      <button class="btn ghost" id="mClose">닫기</button>
+      <button class="btn" id="mCopy">복사하기</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirm" hidden>
+  <div class="card" role="alertdialog" aria-modal="true" aria-labelledby="cTitle" aria-describedby="cBody">
+    <h3 id="cTitle"></h3><p id="cBody"></p><div id="cExtra"></div>
+    <div class="row"><button class="btn ghost" id="cNo">취소</button><button class="btn pink" id="cYes">확인</button></div>
+  </div>
+</div>
+
+<label id="demo" class="card">시안 상태 <select id="demoSel"><option value="normal">정상</option><option value="today0">오늘 기록 0개</option><option value="empty">전체 0개</option><option value="offline">연결 실패</option></select></label>
+
+<div id="toast" class="card" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+const V3 = THREE.Vector3;
+const rand = (a,b)=>a+Math.random()*(b-a);
+const INK = 0x1a1430;
+const $ = s=>document.querySelector(s);
+
+/* ---------- DATA ---------- */
+const PLANETS = [
+  {id:'po', name:'제품 기획', sub:'PO 업무 · 스프린트', color:0xff7a59, css:'#ff7a59', r:6, pos:[0,0,-34], deco:'town',
+   kw:['기획','스프린트','사용자','인터뷰','온보딩','kpt','지표','회고','스펙','po'],
+   records:[
+    {t:'온보딩 3단계로 줄이기', b:'가입 후 첫 기록까지 5단계 → 3단계. 템플릿 고르는 단계는 첫 기록 다음으로 미룬다.', d:'2026-11-04', tags:['아이디어']},
+    {t:'사용자 인터뷰 #3 메모', b:'"기록은 하는데 다시 안 봐요." 회고 시점에 예전 기록을 꺼내 보여주는 장치가 필요하다.', d:'2026-11-06', tags:['인터뷰','인사이트']},
+    {t:'이번 스프린트 KPT', b:'Keep: 데일리 15분 이내 / Problem: 스펙 확정이 늦음 / Try: 금요일 오후 스펙 동결', d:'2026-11-08', tags:['회고']},
+  ]},
+  {id:'class', name:'21일차 수업', sub:'Claude · MCP', color:0x5ec8ff, css:'#5ec8ff', r:5, pos:[36,7,-10], deco:'crystal', ring:true,
+   kw:['mcp','claude','클로드','수업','프롬프트','훅','코드','에이전트','api'],
+   records:[
+    {t:'MCP가 뭐더라', b:'모델이 외부 도구와 데이터에 붙는 표준 규약. 서버가 tool과 resource를 열어두면 Claude가 가져다 쓴다.', d:'2026-11-11', tags:['개념']},
+    {t:'Claude Code 훅', b:'도구 실행 전후에 스크립트를 끼워 넣는다. 반복 작업 자동화에 쓰기 좋다.', d:'2026-11-11', tags:['실습']},
+    {t:'프롬프트 순서', b:'목표 → 맥락 → 제약 → 출력 형식 순서로 쓰면 결과가 안정적이다.', d:'2026-11-10', tags:['팁']},
+    {t:'오늘의 과제', b:'기록이 별·행성·우주가 되는 3D 사이트 시안 만들기.', d:'2026-11-11', tags:['과제']},
+  ]},
+  {id:'read', name:'읽은 것들', sub:'아티클 · 책 밑줄', color:0x8fdc5a, css:'#8fdc5a', r:4.6, pos:[-34,-5,-8], deco:'forest',
+   kw:['책','아티클','읽','논문','블로그','밑줄','글'],
+   records:[
+    {t:'PARA 정리법', b:'프로젝트 · 영역 · 자원 · 보관 네 칸으로 나눈다. 행성 분류 기준으로 써볼 만하다.', d:'2026-11-02', tags:['정리법']},
+    {t:'제텔카스텐 아티클', b:'메모끼리 링크를 거는 게 핵심. 별과 별 사이를 선으로 잇는 기능으로 옮겨볼 수 있겠다.', d:'2026-11-07', tags:['정리법','아이디어']},
+  ]},
+  {id:'idea', name:'생각 조각', sub:'아직 이름 없는 메모', color:0xc29bff, css:'#c29bff', r:3.8, pos:[-6,11,26], deco:'rock',
+   kw:[],
+   records:[
+    {t:'기록이 별이 된다면', b:'쓸수록 우주가 커지는 감각. 행성 크기 = 기록 수.', d:'2026-11-09', tags:['막연함']},
+    {t:'새벽 2시 생각', b:'정리 안 된 메모도 일단 띄워두기. 분류는 나중에 해도 된다.', d:'2026-11-10', tags:['막연함']},
+  ]},
+];
+
+/* ---------- RENDERER ---------- */
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+$('#stage').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x15103a);
+const camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.1, 3000);
+
+scene.add(new THREE.HemisphereLight(0xcfd6ff, 0x3a2a6a, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 0.95); sun.position.set(40,60,30); scene.add(sun);
+
+const G = (()=>{const c=document.createElement('canvas');c.width=3;c.height=1;const g=c.getContext('2d');
+  ['#5a5a5a','#b0b0b0','#ffffff'].forEach((col,i)=>{g.fillStyle=col;g.fillRect(i,0,1,1)});
+  const t=new THREE.CanvasTexture(c);t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;})();
+const toon = (color,o={}) => new THREE.MeshToonMaterial(Object.assign({color,gradientMap:G},o));
+const outlineMat = new THREE.MeshBasicMaterial({color:INK, side:THREE.BackSide});
+function ol(mesh,s=1.08){const o=new THREE.Mesh(mesh.geometry,outlineMat);o.scale.setScalar(s);mesh.add(o);return mesh;}
+function part(parent,geo,color,pos,scl,s=1.08,matOpts){
+  const m=new THREE.Mesh(geo,toon(color,matOpts)); if(pos)m.position.set(...pos); if(scl)m.scale.set(...scl);
+  if(s)ol(m,s); parent.add(m); return m;
+}
+
+/* ---------- SPACE BACKDROP ---------- */
+(()=>{
+  const N=1800,pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  const pal=[[1,1,1],[1,.85,.5],[.7,.85,1],[1,.6,.8]];
+  for(let i=0;i<N;i++){const v=new V3(rand(-1,1),rand(-1,1),rand(-1,1)).normalize().multiplyScalar(rand(400,900));
+    pos.set([v.x,v.y,v.z],i*3);const c=pal[i%4];col.set(c,i*3);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:2.2,vertexColors:true,sizeAttenuation:false})));
+  const blob=(c1)=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');
+    const r=g.createRadialGradient(128,128,0,128,128,128);r.addColorStop(0,c1);r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);};
+  [['rgba(122,108,255,.55)',[-300,120,-500],520],['rgba(255,93,143,.38)',[380,-80,-420],460],['rgba(94,200,255,.3)',[60,-220,480],560],['rgba(255,210,63,.25)',[-420,-60,260],400]]
+   .forEach(([c,p,s])=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blob(c),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));sp.position.set(...p);sp.scale.set(s,s,1);scene.add(sp);});
+  // cartoon sun
+  const sunG=new THREE.Group();sunG.position.set(160,110,-260);scene.add(sunG);
+  ol(sunG.add(new THREE.Mesh(new THREE.IcosahedronGeometry(22,1),new THREE.MeshBasicMaterial({color:0xffd23f}))).children[0],1.06);
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:blob('rgba(255,200,80,.7)'),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));halo.scale.set(140,140,1);sunG.add(halo);
+})();
+
+/* ---------- CHARACTER (original chibi astronaut) ---------- */
+const player=new THREE.Group(); player.position.set(0,0,10); scene.add(player);
+const yawG=new THREE.Group(); player.add(yawG);
+const leanG=new THREE.Group(); yawG.add(leanG);
+const WHITE=0xf3f1ff, YEL=0xffd23f, PINK=0xff5d8f, VIO=0x7a6cff;
+const sph=(r,w=22,h=16)=>new THREE.SphereGeometry(r,w,h);
+part(leanG,sph(.55),WHITE,[0,0,0],[1,1.05,.92]);
+const belt=part(leanG,new THREE.TorusGeometry(.5,.085,8,28),YEL,[0,-.14,0],null,1.12); belt.rotation.x=Math.PI/2;
+part(leanG,new THREE.BoxGeometry(.4,.24,.12),PINK,[0,.14,.5],null,1.12);
+part(leanG,sph(.78,28,20),WHITE,[0,1.05,0]);
+part(leanG,sph(.6),0x2b2f6b,[0,1.02,.38],[1,.72,.62],1.07);
+const eyeMat=new THREE.MeshBasicMaterial({color:0x9ff3ff});
+const eyes=[-.19,.19].map(x=>{const e=new THREE.Mesh(sph(.075,10,8),eyeMat);e.position.set(x,1.05,.77);e.scale.set(1,1.7,.5);leanG.add(e);return e;});
+const shine=new THREE.Mesh(sph(.1,10,8),new THREE.MeshBasicMaterial({color:0xffffff}));shine.position.set(.26,1.24,.68);shine.scale.set(1.3,.6,.4);leanG.add(shine);
+[-1,1].forEach(s=>{const b=part(leanG,new THREE.CylinderGeometry(.18,.18,.16,16),YEL,[s*.78,1.05,0],null,1.15);b.rotation.z=Math.PI/2;});
+const ant=part(leanG,new THREE.CylinderGeometry(.035,.035,.55,8),INK,[.3,1.95,0],null,0);ant.rotation.z=-.35;
+const antBall=part(leanG,sph(.13,12,10),PINK,[.4,2.22,0],null,1.15);
+const arms=[-1,1].map(s=>{const a=new THREE.Group();a.position.set(s*.6,.18,0);leanG.add(a);
+  part(a,sph(.2),WHITE,[s*.04,-.18,0],[1,1.45,1]);part(a,sph(.19),YEL,[s*.07,-.46,.02]);return a;});
+const legs=[-1,1].map(s=>{const l=new THREE.Group();l.position.set(s*.24,-.5,0);leanG.add(l);
+  part(l,sph(.22),WHITE,[0,-.12,0],[1,1.25,1]);part(l,sph(.25),PINK,[0,-.38,.07],[1.05,.68,1.25]);return l;});
+part(leanG,new THREE.BoxGeometry(.72,.82,.36),VIO,[0,.16,-.6],null,1.07);
+const flames=[];
+[-1,1].forEach(s=>{part(leanG,new THREE.CylinderGeometry(.16,.16,.78,14),YEL,[s*.25,.12,-.84],null,1.1);
+  part(leanG,new THREE.CylinderGeometry(.12,.17,.14,12),INK,[s*.25,-.33,-.84],null,0);
+  const fg=new THREE.ConeGeometry(.15,.7,10);fg.rotateX(Math.PI);fg.translate(0,-.35,0);
+  const f=new THREE.Mesh(fg,new THREE.MeshBasicMaterial({color:0xff8a2a}));f.position.set(s*.25,-.4,-.84);leanG.add(f);
+  const fg2=new THREE.ConeGeometry(.08,.45,8);fg2.rotateX(Math.PI);fg2.translate(0,-.22,0);
+  const f2=new THREE.Mesh(fg2,new THREE.MeshBasicMaterial({color:0xfff1a0}));f2.position.set(s*.25,-.4,-.84);leanG.add(f2);
+  flames.push(f,f2);});
+
+// jet trail puffs
+const puffGeo=sph(.16,8,6), puffs=[];
+for(let i=0;i<40;i++){const m=new THREE.Mesh(puffGeo,new THREE.MeshBasicMaterial({color:0xfff1a0,transparent:true}));m.visible=false;scene.add(m);puffs.push({m,life:0});}
+let puffIdx=0;
+
+/* ---------- PLANETS ---------- */
+const starGeo=(()=>{const s=new THREE.Shape();for(let i=0;i<10;i++){const a=i/10*Math.PI*2+Math.PI/2,rr=i%2?.23:.55;i?s.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):s.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}
+  const g=new THREE.ExtrudeGeometry(s,{depth:.2,bevelEnabled:true,bevelThickness:.06,bevelSize:.05,bevelSegments:1});g.center();return g;})();
+const starMat=toon(0xffd23f,{emissive:0x4a3000}), starMatOn=toon(0xff5d8f,{emissive:0x400010});
+
+function label(text,sub,css){
+  const c=document.createElement('canvas');c.width=768;c.height=200;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));
+  sp.userData.draw=()=>{const g=c.getContext('2d');g.clearRect(0,0,768,200);g.textAlign='center';g.lineJoin='round';
+    g.font='86px "Black Han Sans","Malgun Gothic",sans-serif';g.lineWidth=18;g.strokeStyle='#1a1430';g.strokeText(text,384,100);g.fillStyle='#fff';g.fillText(text,384,100);
+    g.font='600 38px "IBM Plex Sans KR","Malgun Gothic",sans-serif';g.lineWidth=12;g.strokeText(sub,384,160);g.fillStyle=css;g.fillText(sub,384,160);
+    sp.material.map.needsUpdate=true;};
+  sp.userData.draw();sp.scale.set(9,2.35,1);return sp;
+}
+
+const bodies=[], starMeshes=[];
+function buildPlanet(P){
+  const g=new THREE.Group(); g.position.set(...P.pos); scene.add(g); P.group=g;
+  const spin=new THREE.Group(); g.add(spin); P.spin=spin; P.scale=1;
+  const col=new THREE.Color(P.color);
+  const body=new THREE.Mesh(new THREE.IcosahedronGeometry(P.r,2),toon(P.color,{flatShading:true}));
+  ol(body,1.035); spin.add(body); body.userData.planet=P; bodies.push(body); P.body=body;
+  // patches
+  const dark=col.clone().multiplyScalar(.72).getHex(), light=col.clone().lerp(new THREE.Color(0xffffff),.45).getHex();
+  const up=new V3(0,1,0);
+  const place=(m,dir,h)=>{m.position.copy(dir).multiplyScalar(P.r+h);m.quaternion.setFromUnitVectors(up,dir);spin.add(m);};
+  const N={town:16,crystal:14,forest:18,rock:12}[P.deco];
+  for(let i=0;i<N;i++){
+    const dir=new V3(rand(-1,1),rand(-1,1),rand(-1,1)).normalize(); if(dir.y>.9)continue;
+    let m;
+    if(P.deco==='town'){ m=i%3? ol(new THREE.Mesh(new THREE.BoxGeometry(.9,rand(.8,1.8),.9),toon(i%2?0xfff3d6:light)),1.12)
+                              : ol(new THREE.Mesh(new THREE.ConeGeometry(.6,1.6,6),toon(dark)),1.12); place(m,dir,.3);}
+    else if(P.deco==='crystal'){ m=ol(new THREE.Mesh(new THREE.OctahedronGeometry(.6,0),toon(i%2?0xffffff:light,{flatShading:true})),1.14); m.scale.set(.7,rand(1.6,2.6),.7); place(m,dir,.6);}
+    else if(P.deco==='forest'){ m=new THREE.Group(); const tr=ol(new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.7,6),toon(0x8a5a3c)),1.2);tr.position.y=.35;m.add(tr);
+      const top=ol(new THREE.Mesh(new THREE.IcosahedronGeometry(.6,0),toon(i%3?dark:0xd6ff8a,{flatShading:true})),1.12);top.position.y=1.05;m.add(top);place(m,dir,0);}
+    else { m=ol(new THREE.Mesh(new THREE.DodecahedronGeometry(rand(.35,.75),0),toon(i%2?dark:0xffffff,{flatShading:true})),1.12); place(m,dir,.1);}
+  }
+  // flag at the pole
+  const pole=part(spin,new THREE.CylinderGeometry(.07,.07,2.4,8),0xffffff,[0,P.r+1.1,0],null,1.2);
+  const fl=part(spin,new THREE.BoxGeometry(1.3,.8,.06),0xff5d8f,[.68,P.r+1.9,0],null,1.1);
+  if(P.ring){const ring=ol(new THREE.Mesh(new THREE.TorusGeometry(P.r*1.65,.28,6,56),toon(0xfff1a0)),1.08);ring.scale.z=.35;ring.rotation.set(1.25,0,.3);g.add(ring);P.ring=ring;}
+  const lb=label(P.name,P.sub,P.css); lb.position.set(0,P.r+4.3,0); g.add(lb); P.label=lb;
+  P.records.forEach((rec,i)=>{rec.id=P.id+'-'+(i+1);addStar(P,rec,null);});
+  P.targetScale=1+P.records.length*.035; P.scale=P.targetScale; spin.scale.setScalar(P.scale);
+}
+PLANETS.forEach(buildPlanet);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>PLANETS.forEach(P=>P.label.userData.draw()));
+
+const flying=[];
+function addStar(P,rec,fromPos){
+  const pivot=new THREE.Group(); pivot.rotation.set(rand(-.7,.7),rand(0,6.28),rand(-.7,.7)); P.group.add(pivot);
+  const holder=new THREE.Group(); holder.rotation.y=rand(0,6.28); pivot.add(holder);
+  const R=P.r*(1+P.records.length*.035)+2.4+rand(0,1.8);
+  const star=ol(new THREE.Mesh(starGeo,starMat),1.16); star.userData={planet:P,rec,spin:rand(1,2.4)};
+  rec.star=star; rec.holder=holder; rec.speed=rand(.18,.38)*(Math.random()<.5?-1:1);
+  starMeshes.push(star);
+  if(fromPos){scene.add(star);star.position.copy(fromPos);flying.push({star,holder,R,t:0,from:fromPos.clone()});}
+  else{holder.add(star);star.position.set(R,0,0);}
+}
+
+/* ---------- INPUT & CAMERA ---------- */
+const keys={}; let camYaw=0, camPitch=.5, camDist=62, camDistTarget=62, mode='overview', autopilot=null;
+const CENTER=new V3(0,2,-6), OV=62;
+const typing=e=>/INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(!$('#confirm').hidden)closeAsk();
+    else if(!$('#modal').hidden)closeModal();
+    else if(busy)skip=true;
+    else if(panelP&&view==='detail'){view='list';renderPanel();}
+    else closePanel();
+    return;}
+  if(typing(e)||!inWorld||busy||!$('#confirm').hidden||!$('#modal').hidden)return;
+  keys[e.code]=true;
+  if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft'].includes(e.code)){
+    autopilot=null; if(!panelP)clearGuest(); if(mode==='overview'){mode='fly';camDistTarget=9;} $('#help').classList.remove('big');
+    if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault();}
+  if(e.code==='KeyE'&&nearP)openPanel(nearP);
+});
+addEventListener('keyup',e=>{keys[e.code]=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+
+const cv=renderer.domElement; let drag=null;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY};cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',e=>{if(!drag)return;camYaw-=(e.clientX-drag.x)*.006;camPitch=Math.max(-1.1,Math.min(1.25,camPitch+(e.clientY-drag.y)*.005));drag.x=e.clientX;drag.y=e.clientY;});
+cv.addEventListener('pointerup',e=>{if(drag&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<6)pick(e);drag=null;});
+cv.addEventListener('wheel',e=>{camDistTarget=Math.max(5,Math.min(80,camDistTarget+e.deltaY*.02));e.preventDefault();},{passive:false});
+
+const ray=new THREE.Raycaster();
+function pick(e){
+  const m=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(m,camera);
+  const live=[...starMeshes.filter(s=>s.visible),...bodies.filter(b=>b.parent.parent.visible)];
+  const hit=ray.intersectObjects(live,false)[0]; if(!hit)return;
+  const u=hit.object.userData;
+  if(u.rec){if(panelP===u.planet)openPanel(u.planet,u.rec);else flyTo(u.planet,u.rec);}
+  else if(u.planet&&panelP!==u.planet)flyTo(u.planet);
+}
+function flyTo(P,rec){
+  const dir=player.position.clone().sub(P.group.position); dir.y=Math.max(dir.y,0); dir.normalize(); if(!isFinite(dir.x))dir.set(0,.3,1).normalize();
+  autopilot={P,rec,t:0,from:player.position.clone(),target:P.group.position.clone().add(dir.multiplyScalar(P.r*P.scale+4.5)).add(new V3(0,1.2,0))};
+  closePanel(); mode='fly'; camDistTarget=9;
+  if(rec&&rec.star&&!inPeriod(rec)){guest=rec;rec.star.visible=true;rec.star.material=starMatOn;toast(`${dayDiff(rec.d,today())}일 전 별이라 이 별만 잠시 보여드려요`);}
+  else toast(`'${P.name}'(으)로 비행 중…`);
+}
+
+/* ---------- UI ---------- */
+let inWorld=false, busy=false, skip=false;
+let panelP=null, view='list', detailRec=null, menuOpen=false, renaming=false;
+let guest=null; // 기간 밖인데 재발견으로 들어와 잠시 보여 주는 별
+function clearGuest(){if(!guest)return;const g=guest;guest=null;if(g.star)g.star.visible=inPeriod(g);}
+const checked=new Set(), cargo=new Set();
+const TODAY0='2026-11-11';
+let demo='normal', period='today', range={from:'2026-11-01',to:TODAY0};
+function today(){return demo==='today0'?'2026-11-12':TODAY0;}
+const live=()=>demo==='normal'||demo==='today0';
+const dayDiff=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+function inPeriod(r){
+  if(!live())return false; const td=today();
+  if(period==='today')return r.d===td;
+  if(period==='week'){const k=dayDiff(r.d,td);return k>=0&&k<7;}
+  return r.d>=range.from&&r.d<=range.to;
+}
+const vis=P=>P.records.filter(inPeriod);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const short=d=>d.slice(5).replace('-','.');
+const IC={"x":"<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>","arrow-left":"<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>","ellipsis":"<circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"19\" cy=\"12\" r=\"1\"/><circle cx=\"5\" cy=\"12\" r=\"1\"/>","pencil":"<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"/><path d=\"m15 5 4 4\"/>","link":"<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/>","image":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/>","file-text":"<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>","type":"<polyline points=\"4 7 4 4 20 4 20 7\"/><line x1=\"9\" x2=\"15\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"12\" y1=\"4\" y2=\"20\"/>","rocket":"<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\"/><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\"/><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\"/><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\"/>"};
+const ico=(n,z=18)=>`<svg class="i" width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+const DEEP={"#ff7a59":"#b23a1c","#5ec8ff":"#0f6aa8","#8fdc5a":"#2f7a1e","#c29bff":"#6a3fc8","#ffb13b":"#8f5a00","#ff6fb5":"#b0246f","#4fd1c5":"#0d7068","#9aa7ff":"#3f4fc0"};
+const deepOf=css=>DEEP[css]||'#4a3fb0';
+PLANETS.forEach(P=>P.deep=deepOf(P.css));
+let toastT; function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200);}
+
+// sample record types
+const EXTRA={
+  'po-2':{type:'image',fname:'interview-03.png'},
+  'class-1':{type:'link',lt:'Model Context Protocol 소개',url:'https://modelcontextprotocol.io/introduction'},
+  'class-4':{type:'file',fname:'21일차_과제안내.pdf',ext:'PDF'},
+  'read-1':{type:'link',lt:'PARA 방식으로 정보 정리하기',url:'https://fortelabs.com/blog/para/'},
+  'read-2':{type:'link',lt:'제텔카스텐 입문',url:'https://zettelkasten.de/introduction/'},
+  'idea-2':{type:'image',fname:'새벽메모_사진.jpg'},
+};
+PLANETS.forEach(P=>P.records.forEach(r=>{Object.assign(r,{type:'text',memo:''},EXTRA[r.id]||{});if(r.type!=='text')r.memo=r.b;}));
+const planetOf=r=>PLANETS.find(P=>P.records.includes(r));
+
+/* dock + period */
+const dock=$('#dock');
+function renderDock(){
+  dock.querySelectorAll('button').forEach(b=>b.remove());
+  PLANETS.forEach(P=>{const b=document.createElement('button');
+    b.innerHTML=`<span class="dot" style="background:${P.css}"></span>${esc(P.name)}<span class="n">${vis(P).length}</span>`;
+    b.onclick=()=>flyTo(P);dock.appendChild(b);P.dockBtn=b;});
+}
+function applyPeriod(auto){
+  const total=()=>PLANETS.reduce((a,P)=>a+vis(P).length,0);
+  if(auto&&period==='today'&&live()&&!total()){period='week';toast('오늘 별이 없어 이번 주를 보여드려요');}
+  PLANETS.forEach(P=>{P.group.visible=live();P.records.forEach(r=>{if(r.star)r.star.visible=inPeriod(r)||r===guest;});P.targetScale=1+vis(P).length*.035;});
+  $('#sRec').textContent=total(); $('#sPlanet').textContent=live()?PLANETS.length:0;
+  document.querySelectorAll('.seg button').forEach(b=>{b.classList.toggle('on',b.dataset.p===period);b.setAttribute('aria-pressed',b.dataset.p===period);});
+  $('#range').hidden=period!=='custom';
+  renderDock(); if(inWorld)dock.hidden=!live();
+  renderRedis(); worldState();
+  if(panelP){if(!PLANETS.includes(panelP)||!live())closePanel();else renderPanel();}
+}
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{period=b.dataset.p;applyPeriod(false);});
+$('#rFrom').value=range.from; $('#rTo').value=range.to;
+$('#rFrom').onchange=e=>{range.from=e.target.value||range.from;applyPeriod();};
+$('#rTo').onchange=e=>{range.to=e.target.value||range.to;applyPeriod();};
+
+/* rediscovery */
+function pickRedis(){
+  if(!live())return null; let best=null; const td=today();
+  PLANETS.forEach(P=>P.records.forEach(r=>{const k=dayDiff(r.d,td);if(k>=7&&(!best||k<best.days))best={P,r,days:k};}));
+  if(!best)PLANETS.forEach(P=>P.records.forEach(r=>{const k=dayDiff(r.d,td);if(!best||k>best.days)best={P,r,days:k};}));
+  return best;
+}
+function renderRedis(){
+  const el=$('#redis'),pk=pickRedis(); el.hidden=!pk||!inWorld; if(!pk)return;
+  el.innerHTML=`<span class="pdot" style="background:${pk.P.css}"></span><div class="tx"><span class="eyebrow">${pk.days}일 전 오늘의 별</span><b>${esc(pk.r.t)}</b></div><button class="btn" id="redisGo">날아가기</button>`;
+  $('#redisGo').onclick=()=>flyTo(pk.P,pk.r);
+}
+
+/* states */
+function worldState(){
+  const m=$('#worldMsg');
+  if(!inWorld||live()){m.hidden=true;return;}
+  m.hidden=false;
+  m.innerHTML=demo==='offline'
+    ?`<span class="eyebrow">연결 끊김</span><h3>수집 앱이 꺼져 있어요.<br>앱을 켜고 새로고침해 주세요.</h3><button class="btn" id="retry">새로고침</button>`
+    :`<span class="eyebrow">빈 우주</span><h3>아직 별이 없어요.<br>수집 앱에 기록을 넣으면 여기에 떠요.</h3>`;
+  const rb=$('#retry'); if(rb)rb.onclick=retry;
+}
+function homeStates(){
+  const st=$('#hState'),grid=home.querySelector('.home-grid'),hero=home.querySelector('.hero');
+  if(demo==='offline'){hero.hidden=true;grid.hidden=true;st.hidden=false;
+    st.innerHTML=`<span class="eyebrow">연결 끊김</span><h3>수집 앱이 꺼져 있어요.<br>앱을 켜고 새로고침해 주세요.</h3><button class="btn" id="hRetry">새로고침</button>`;
+    $('#hRetry').onclick=retry;}
+  else if(demo==='empty'){hero.hidden=false;grid.hidden=true;st.hidden=false;
+    $('#hGreet').textContent='나만의 우주를 시작해 보세요';$('#hStats').innerHTML='<b>0</b>개의 별 <b>0</b>개의 행성';
+    st.innerHTML=`<span class="eyebrow">빈 우주</span><h3>아직 별이 없어요</h3><p>수집 앱에 기록을 끌어다 놓으면 여기에 별이 떠요.</p>`;}
+  else{hero.hidden=false;grid.hidden=false;st.hidden=true;}
+}
+function retry(){demo='normal';$('#demoSel').value='normal';if(inWorld)applyPeriod(true);else renderHome();toast('수집 앱과 다시 연결했어요');}
+$('#demoSel').onchange=e=>{demo=e.target.value;if(inWorld){closePanel();applyPeriod(true);}else renderHome();};
+
+/* W-02 / W-03 panel */
+const panel=$('#panel');
+function openPanel(P,rec){if(panelP!==P)checked.clear();panelP=P;view=rec?'detail':'list';detailRec=rec||null;menuOpen=false;renaming=false;renderPanel();panel.hidden=false;$('#near').hidden=true;}
+function closePanel(){panel.hidden=true;panelP=null;clearGuest();setSelectedStar();}
+function setSelectedStar(){
+  starMeshes.forEach(s=>s.material=starMat); if(guest&&guest.star)guest.star.material=starMatOn; if(!panelP)return;
+  (view==='detail'&&detailRec?[detailRec]:[...checked]).forEach(r=>{if(r.star)r.star.material=starMatOn;});
+}
+function thumb(r,P){
+  if(r.type==='image')return `<span class="th" style="background:linear-gradient(135deg,${P.css},#fff 85%)" aria-hidden="true"></span>`;
+  return `<span class="th" aria-hidden="true">${ico(r.type==='link'?'link':r.type==='file'?'file-text':'type',17)}</span>`;
+}
+function renderPanel(){const P=panelP;if(!P)return;if(guest&&!(view==='detail'&&detailRec===guest))clearGuest();panel.style.setProperty('--accent',P.deep);(view==='detail'&&detailRec&&P.records.includes(detailRec))?renderDetail(P,detailRec):renderList(P);setSelectedStar();}
+function loadLabel(){return checked.size?`고른 별 ${checked.size}개 탐사선에 싣기`:'행성 전체 탐사선에 싣기';}
+function renderList(P){
+  view='list';
+  const rs=vis(P).slice().sort((a,b)=>b.d.localeCompare(a.d));
+  const items=rs.map(r=>`<div class="rec row${checked.has(r)?' on':''}"><label class="ck"><input type="checkbox" data-ck="${r.id}" ${checked.has(r)?'checked':''} aria-label="'${esc(r.t)}' 싣기 선택"></label><button class="recb" data-id="${r.id}">${thumb(r,P)}<span class="t">${esc(r.t)}</span><span class="d">${short(r.d)}</span></button></div>`).join('');
+  panel.innerHTML=`
+   <header><div class="planet-ico" style="background:${P.css}"></div>
+    <div class="hd">${renaming?`<form id="pRename"><input id="pRenameIn" value="${esc(P.name)}" maxlength="20" aria-label="행성 이름"></form>`
+      :`<h2>${esc(P.name)} <button class="ic" id="pRen" aria-label="이름 바꾸기" title="이름 바꾸기">${ico('pencil',16)}</button></h2>`}
+     <div class="sub">이 기간 별 ${rs.length}개 · 전체 ${P.records.length}개</div></div>
+    <button class="btn x ghost" id="pMenu" aria-label="행성 메뉴" aria-expanded="${menuOpen}">${ico('ellipsis')}</button>
+    <button class="btn x" id="pX" aria-label="닫기">${ico('x')}</button></header>
+   ${menuOpen?`<div class="menu"><button data-m="new">새 행성 만들기</button><button data-m="merge" ${PLANETS.length<2?'disabled':''}>다른 행성과 합치기</button><button data-m="del" ${P.records.length?'disabled':''}>빈 행성 삭제${P.records.length?' · 별이 있으면 못 지워요':''}</button></div>`:''}
+   <div class="body"><div class="lbl">이 행성을 도는 별들</div>
+    ${rs.length?`<div class="recs">${items}</div>`:`<div class="empty">이 기간에는 이 행성에 별이 없어요.<br>위쪽에서 기간을 넓혀 보세요.</div>`}</div>
+   <footer><button class="btn violet" id="pLoad" ${rs.length?'':'disabled'}>${loadLabel()}</button>
+    <small>체크한 별만 실어요. 고르지 않으면 이 기간의 행성 전체를 실어요.</small></footer>`;
+  $('#pX').onclick=closePanel;
+  $('#pMenu').onclick=()=>{menuOpen=!menuOpen;renderPanel();};
+  const rn=$('#pRen'); if(rn)rn.onclick=()=>{renaming=true;renderPanel();const i=$('#pRenameIn');i.focus();i.select();};
+  const rf=$('#pRename');
+  if(rf){let fin=false;const done=()=>{if(fin)return;fin=true;const v=$('#pRenameIn').value.trim();
+      if(v&&v!==P.name){P.name=v;relabel(P);toast(`행성 이름을 '${v}'(으)로 바꿨어요`);}
+      renaming=false;renderPanel();renderDock();};
+    rf.onsubmit=e=>{e.preventDefault();done();}; $('#pRenameIn').onblur=done;}
+  panel.querySelectorAll('[data-ck]').forEach(c=>c.onchange=()=>{
+    const r=P.records.find(x=>x.id===c.dataset.ck); c.checked?checked.add(r):checked.delete(r);
+    c.closest('.rec').classList.toggle('on',c.checked); $('#pLoad').textContent=loadLabel(); setSelectedStar();});
+  panel.querySelectorAll('.recb').forEach(b=>b.onclick=()=>{detailRec=P.records.find(x=>x.id===b.dataset.id);view='detail';renderPanel();});
+  panel.querySelectorAll('.menu [data-m]').forEach(b=>b.onclick=()=>menuAct(b.dataset.m,P));
+  $('#pLoad').onclick=()=>{load(checked.size?[...checked]:rs);checked.clear();renderPanel();};
+}
+function renderDetail(P,r){
+  let pv;
+  if(r.type==='image')pv=`<div class="pv img" style="background:linear-gradient(135deg,${P.css},#fff 85%)"><span>${esc(r.fname)}</span></div>`;
+  else if(r.type==='file')pv=`<div class="pv file"><span class="fi">${esc(r.ext)}</span><div><b>${esc(r.fname)}</b><small>${esc(r.ext)} · ${r.size?esc(r.size):'<span class="na">크기 미확인</span>'}</small></div></div>`;
+  else if(r.type==='link')pv=`<div class="pv link"><b>${esc(r.lt)}</b><small>${esc(r.url)}</small></div>`;
+  else pv=`<div class="detail">${esc(r.b)}</div>`;
+  const kind={text:'텍스트',image:'이미지',file:'파일',link:'링크'}[r.type];
+  panel.innerHTML=`
+   <header><button class="btn x ghost" id="pBack" aria-label="'${esc(P.name)}' 목록으로">${ico('arrow-left')}</button>
+    <div class="hd"><div class="sub"><span class="pdot" style="background:${P.css};display:inline-block;vertical-align:-3px"></span> ${esc(P.name)}</div><h2 class="h2s">${esc(r.t)}</h2></div>
+    <button class="btn x" id="pX" aria-label="닫기">${ico('x')}</button></header>
+   <div class="body">
+    ${pv}
+    <dl class="meta"><dt>종류</dt><dd>${kind}</dd><dt>넣은 날짜</dt><dd class="mono">${r.d} · ${dayDiff(r.d,today())}일 전</dd></dl>
+    <div class="acts">${r.type==='text'?'':`<button class="btn ghost" id="aOpen">원본 열기</button>`}<button class="btn ghost" id="aFolder">폴더에서 보기</button></div>
+    <label class="lbl" for="memo">메모</label>
+    <textarea id="memo" rows="3" placeholder="이 별에 덧붙일 말">${esc(r.memo||'')}</textarea><small class="st" id="memoSt">입력을 멈추면 저장돼요</small>
+    <div class="mv"><label for="aMove">행성 옮기기</label><select id="aMove">${PLANETS.map(Q=>`<option value="${Q.id}" ${Q===P?'selected':''}>${esc(Q.name)}</option>`).join('')}</select></div>
+    <button class="linkdel" id="aDel">이 별 지우기</button>
+   </div>
+   <footer><button class="btn violet" id="pLoad1" ${cargo.has(r)?'disabled':''}>${cargo.has(r)?'탐사선에 실은 별이에요':'이 별 탐사선에 싣기'}</button></footer>`;
+  $('#pBack').onclick=()=>{view='list';renderPanel();};
+  $('#pX').onclick=closePanel;
+  const ao=$('#aOpen'); if(ao)ao.onclick=()=>toast('시안: 로컬 서버가 원본을 기본 앱으로 열어요');
+  $('#aFolder').onclick=()=>toast('시안: 로컬 서버가 보관함 폴더를 열어요');
+  let mt; $('#memo').oninput=e=>{$('#memoSt').textContent='저장 중…';clearTimeout(mt);
+    mt=setTimeout(()=>{r.memo=e.target.value;const s=$('#memoSt');if(s)s.textContent='저장됨';},600);};
+  $('#aMove').onchange=e=>{const Q=PLANETS.find(x=>x.id===e.target.value);
+    if(Q&&Q!==P){moveRec(r,P,Q);view='list';renderPanel();toast(`'${Q.name}'(으)로 옮겼어요`);}};
+  $('#aDel').onclick=async()=>{
+    if(await ask({title:`별 '${r.t}'을(를) 지울까요?`,body:'기록과 보관함 복사본이 함께 지워져요. 원본 파일은 그대로예요.',ok:'지우기'})){
+      removeRec(r,P);view='list';renderPanel();toast('별을 지웠어요');}};
+  $('#pLoad1').onclick=()=>{load([r]);renderPanel();};
+}
+function relabel(P){const old=P.label;P.group.remove(old);const lb=label(P.name,P.sub,P.css);lb.position.copy(old.position);P.group.add(lb);P.label=lb;}
+
+/* record + planet operations */
+function detachStar(r,P){
+  const i=starMeshes.indexOf(r.star); if(i>=0)starMeshes.splice(i,1);
+  const fi=flying.findIndex(F=>F.star===r.star); if(fi>=0){scene.remove(r.star);flying.splice(fi,1);}
+  const pivot=r.holder.parent; if(pivot&&pivot.parent)pivot.parent.remove(pivot);
+  P.records.splice(P.records.indexOf(r),1);
+}
+function moveRec(r,P,Q){const from=r.star.getWorldPosition(new V3());detachStar(r,P);Q.records.push(r);addStar(Q,r,from);r.star.visible=inPeriod(r);checked.delete(r);applyPeriod();}
+function removeRec(r,P){detachStar(r,P);cargo.delete(r);checked.delete(r);updateCargo();applyPeriod();}
+const NEWPAL=[0xffb13b,0xff6fb5,0x4fd1c5,0x9aa7ff,0xff7a59,0x5ec8ff,0x8fdc5a,0xc29bff];
+const SLOTS=[[30,-10,28],[-38,12,-36],[16,16,-52],[-30,-14,30],[48,-4,-38],[4,-18,6]];
+const DECOS=['town','crystal','forest','rock']; let made=0;
+function createPlanet(name){
+  const c=NEWPAL[made%NEWPAL.length];
+  const P={id:'p'+Date.now(),name,sub:'새로 만든 행성',color:c,css:'#'+c.toString(16).padStart(6,'0'),r:3.6,pos:SLOTS[made%SLOTS.length],deco:DECOS[made%4],kw:[],records:[]};
+  P.deep=deepOf(P.css); made++; PLANETS.push(P); buildPlanet(P); applyPeriod(); return P;
+}
+function removePlanet(P){scene.remove(P.group);const bi=bodies.indexOf(P.body);if(bi>=0)bodies.splice(bi,1);PLANETS.splice(PLANETS.indexOf(P),1);if(panelP===P)closePanel();applyPeriod();}
+async function menuAct(m,P){
+  menuOpen=false; renderPanel();
+  if(m==='new'){
+    const name=await ask({title:'새 행성 만들기',body:'이름을 정하면 우주에 새 행성이 생겨요.',ok:'만들기',kind:'yellow',
+      extra:`<input id="cName" placeholder="예: 운동 기록" maxlength="20" aria-label="새 행성 이름">`,focus:'#cName',read:()=>$('#cName').value.trim()});
+    if(name){const Q=createPlanet(name);toast(`'${Q.name}' 행성이 생겼어요`);flyTo(Q);}
+  }else if(m==='merge'){
+    const others=PLANETS.filter(Q=>Q!==P);
+    const id=await ask({title:`'${P.name}'을(를) 다른 행성과 합칠까요?`,body:`별 ${P.records.length}개가 고른 행성으로 옮겨지고 '${P.name}'은(는) 사라져요.`,ok:'합치기',
+      extra:`<select id="cTo" aria-label="합칠 행성">${others.map(Q=>`<option value="${Q.id}">${esc(Q.name)}(으)로 합치기</option>`).join('')}</select>`,read:()=>$('#cTo').value});
+    if(id){const Q=PLANETS.find(x=>x.id===id);[...P.records].forEach(r=>moveRec(r,P,Q));removePlanet(P);toast(`'${Q.name}'에 합쳤어요`);}
+  }else if(m==='del'){
+    if(await ask({title:`빈 행성 '${P.name}'을(를) 지울까요?`,body:'별이 없는 행성이라 지워지는 기록은 없어요.',ok:'지우기'})){removePlanet(P);toast('빈 행성을 지웠어요');}
+  }
+}
+
+/* in-page confirm (no browser dialogs) */
+let askRes=null;
+function ask({title,body,ok,kind,extra,focus,read}){
+  $('#cTitle').textContent=title; $('#cBody').textContent=body; $('#cExtra').innerHTML=extra||'';
+  const y=$('#cYes'); y.textContent=ok; y.className='btn '+(kind||'pink');
+  $('#confirm').hidden=false; (focus?$(focus):$('#cNo')).focus();
+  return new Promise(res=>{
+    askRes=v=>{$('#confirm').hidden=true;askRes=null;res(v);};
+    y.onclick=()=>{const v=read?read():true;if(read&&!v){toast('이름을 입력해 주세요');return;}askRes(v);};
+    $('#cNo').onclick=()=>askRes(false);
+  });
+}
+function closeAsk(){if(askRes)askRes(false);}
+$('#confirm').onclick=e=>{if(e.target.id==='confirm')closeAsk();};
+$('#cExtra').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#cYes').click();}});
+
+/* W-04 probe */
+function updateCargo(){$('#cargoN').textContent=cargo.size;$('#hCargoN').textContent=cargo.size;}
+function load(rs){
+  let n=0; rs.forEach(r=>{if(!cargo.has(r)){cargo.add(r);n++;}}); updateCargo();
+  const b=$('#probeBtn'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
+  toast(n?`탐사선에 별 ${n}개를 실었어요`:'이미 실은 별이에요');
+}
+let mFmt='claude';
+function openProbe(){mFmt='claude';renderProbe();$('#modal').hidden=false;$('#mClose').focus();}
+function cargoList(){return [...cargo].filter(r=>planetOf(r));}
+function group(rs){const m=new Map();rs.forEach(r=>{const P=planetOf(r);if(!m.has(P))m.set(P,[]);m.get(P).push(r);});return m;}
+function line(r){
+  const head=`### ${r.t} · ${r.d}`, memo=r.memo&&r.type==='text'?`\n메모: ${r.memo}`:'';
+  if(r.type==='link')return `${head}\n[링크] ${r.lt}\n${r.url}\n${r.memo}`;
+  if(r.type==='image')return `${head}\n[이미지] ${r.fname} (이미지는 내 PC에만 있어요. 필요하면 Claude에 따로 첨부하세요)\n${r.memo}`;
+  if(r.type==='file')return `${head}\n[파일] ${r.fname} · ${r.size||'크기 미확인'}\n${r.memo}`;
+  return `${head}\n${r.b}${memo}`;
+}
+function buildClaude(rs){
+  const g=group(rs);
+  let s=`아래는 내 spaceLog에서 고른 기록 ${rs.length}개야. 행성(주제) ${g.size}개에 나뉘어 있어.\n이 맥락을 기억하고 앞으로의 질문에 참고해줘.\n`;
+  g.forEach((list,P)=>{s+=`\n## 행성: ${P.name} (${P.sub})\n\n`+list.map(line).join('\n\n')+'\n';});
+  return s+`\n---\n요청: 이 기록들에서 반복되는 주제 3개와, 다음에 해볼 행동 하나를 제안해줘.`;
+}
+function buildMCP(rs){
+  const res=[]; group(rs).forEach((list,P)=>res.push({uri:`spacelog://planet/${P.id}`,name:P.name,mimeType:'application/json',
+    records:list.map(r=>Object.assign({id:r.id,type:r.type,title:r.t,created_at:r.d},
+      r.type==='text'?{body:r.b}:{},r.type==='link'?{url:r.url,link_title:r.lt}:{},r.fname?{file_name:r.fname}:{},r.memo?{memo:r.memo}:{}))}));
+  return JSON.stringify({server:'spacelog',resources:res},null,2);
+}
+function renderProbe(){
+  const rs=cargoList();
+  $('#mN').textContent=rs.length;
+  $('#mCargo').innerHTML=rs.map(r=>{const P=planetOf(r);return `<span class="chip"><span class="pdot" style="background:${P.css}"></span><span class="t">${esc(r.t)}</span><button data-rm="${r.id}" aria-label="'${esc(r.t)}' 빼기">${ico('x',12)}</button></span>`;}).join('')
+    +`<button class="chip add" id="mAll">+ 이 기간 우주 전체 싣기</button>`;
+  $('#mOut').textContent=rs.length?(mFmt==='claude'?buildClaude(rs):buildMCP(rs))
+    :'아직 실은 별이 없어요.\n행성 패널에서 별을 골라 "탐사선에 싣기"를 누르거나,\n위의 "이 기간 우주 전체 싣기"를 눌러 보세요.';
+  $('#mCopy').disabled=!rs.length; $('#mClear').disabled=!rs.length;
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.f===mFmt));
+  $('#mCargo').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{cargo.delete(rs.find(x=>x.id===b.dataset.rm));updateCargo();renderProbe();});
+  $('#mAll').onclick=()=>{let n=0;PLANETS.forEach(P=>vis(P).forEach(r=>{if(!cargo.has(r)){cargo.add(r);n++;}}));updateCargo();renderProbe();
+    toast(n?`별 ${n}개를 더 실었어요`:'이 기간의 별은 이미 모두 실었어요');};
+}
+function closeModal(){$('#modal').hidden=true;if(panelP)renderPanel();}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{mFmt=b.dataset.f;renderProbe();});
+$('#mClose').onclick=closeModal;
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeModal();};
+$('#mClear').onclick=()=>{cargo.clear();updateCargo();renderProbe();};
+$('#mCopy').onclick=()=>{const txt=$('#mOut').textContent;
+  const sel=()=>{const r=document.createRange();r.selectNodeContents($('#mOut'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('선택했어요. Ctrl+C로 복사하세요');};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('복사했어요. Claude 대화창에 붙여넣으세요'),sel);}catch(err){sel();}};
+$('#probeBtn').onclick=openProbe;
+$('#near').onclick=()=>nearP&&openPanel(nearP);
+
+renderDock(); applyPeriod(); updateCargo();
+
+/* ---------- LOOP ---------- */
+const vel=new V3(), clock=new THREE.Clock(); let nearP=null, t=0;
+const camTarget=new V3(), tmp=new V3();
+function step(){
+  const dt=Math.min(clock.getDelta(),.05);
+  if(!inWorld){requestAnimationFrame(step);return;}
+  t+=dt;
+  // input
+  const f=new V3(-Math.sin(camYaw),0,-Math.cos(camYaw)), r=new V3(Math.cos(camYaw),0,-Math.sin(camYaw));
+  const inp=new V3();
+  if(keys.KeyW||keys.ArrowUp)inp.add(f); if(keys.KeyS||keys.ArrowDown)inp.sub(f);
+  if(keys.KeyD||keys.ArrowRight)inp.add(r); if(keys.KeyA||keys.ArrowLeft)inp.sub(r);
+  if(keys.Space)inp.y+=1; if(keys.ShiftLeft||keys.ShiftRight||keys.KeyC)inp.y-=1;
+  const MAX=15;
+  if(autopilot){
+    const A=autopilot; A.t=Math.min(1,A.t+dt/1.2); const ae=A.t<.5?2*A.t*A.t:1-Math.pow(-2*A.t+2,2)/2;
+    tmp.copy(A.from).lerp(A.target,ae); vel.copy(tmp).sub(player.position).divideScalar(Math.max(dt,1e-3));
+    if(A.t>=1){autopilot=null;setTimeout(()=>{vel.set(0,0,0);if(inWorld&&!autopilot)openPanel(A.P,A.rec);},200);}
+    const hy=Math.atan2(vel.x,vel.z)+Math.PI; let dy=hy-camYaw; dy=Math.atan2(Math.sin(dy),Math.cos(dy)); camYaw+=dy*(1-Math.exp(-1.2*dt));
+  }else{
+    if(inp.lengthSq())inp.normalize();
+    vel.addScaledVector(inp,32*dt); vel.multiplyScalar(Math.exp(-2.4*dt)); if(vel.length()>MAX)vel.setLength(MAX);
+  }
+  player.position.addScaledVector(vel,dt);
+  // planet collision + proximity
+  let best=null,bd=1e9;
+  PLANETS.forEach(P=>{
+    P.spin.rotation.y+=dt*.06; P.scale+=(P.targetScale-P.scale)*Math.min(1,dt*3); P.spin.scale.setScalar(P.scale);
+    if(P.ring&&P.ring.rotation)P.ring.rotation.z+=dt*.05;
+    P.records.forEach(rec=>{rec.holder.rotation.y+=rec.speed*dt; rec.star.rotation.y+=rec.star.userData.spin*dt;});
+    tmp.copy(player.position).sub(P.group.position); const d=tmp.length(), minD=P.r*P.scale+1.6;
+    if(d<minD){tmp.normalize();player.position.copy(P.group.position).addScaledVector(tmp,minD);const vn=vel.dot(tmp);if(vn<0)vel.addScaledVector(tmp,-vn*1.4);}
+    const near=d-(P.r*P.scale); if(near<8&&near<bd){bd=near;best=P;}
+  });
+  nearP=best;
+  PLANETS.forEach(P=>P.dockBtn.classList.toggle('here',P===nearP));
+  const nb=$('#near');
+  if(nearP&&panelP!==nearP&&!autopilot&&$('#worldMsg').hidden&&nearP.group.visible){nb.hidden=false;const s=`<kbd>E</kbd>'${nearP.name}' 행성 열기`;if(nb.innerHTML!==s)nb.innerHTML=s;}else nb.hidden=true;
+  if(panelP&&nearP!==panelP&&!autopilot&&player.position.distanceTo(panelP.group.position)>panelP.r*panelP.scale+14)closePanel();
+
+  // flying stars
+  for(let i=flying.length-1;i>=0;i--){const F=flying[i];F.t+=dt/1.5;const e=F.t<.5?2*F.t*F.t:1-Math.pow(-2*F.t+2,2)/2;
+    const tgt=F.holder.localToWorld(new V3(F.R,0,0)); const mid=F.from.clone().lerp(tgt,.5).add(new V3(0,7,0));
+    const a=F.from.clone().lerp(mid,e), b=mid.clone().lerp(tgt,e); F.star.position.copy(a.lerp(b,e));
+    F.star.scale.setScalar(1+Math.sin(F.t*Math.PI)*.8); F.star.rotation.y+=dt*8;
+    if(F.t>=1){F.holder.add(F.star);F.star.position.set(F.R,0,0);F.star.scale.setScalar(1);flying.splice(i,1);}}
+
+  // character anim
+  const sp=vel.length(), k=Math.min(sp/MAX,1.3);
+  if(sp>.5){const ty=Math.atan2(vel.x,vel.z);let dy=ty-yawG.rotation.y;dy=Math.atan2(Math.sin(dy),Math.cos(dy));yawG.rotation.y+=dy*(1-Math.exp(-8*dt));}
+  leanG.rotation.x+=((Math.min(k,1)*.55)-leanG.rotation.x)*(1-Math.exp(-6*dt));
+  leanG.position.y=Math.sin(t*2.2)*.14*(1-k*.6);
+  leanG.rotation.z=Math.sin(t*1.3)*.05;
+  arms[0].rotation.x=-Math.sin(t*2.2)*.25-k*.9; arms[1].rotation.x=Math.sin(t*2.2)*.25-k*.9;
+  arms[0].rotation.z=-.25-k*.3; arms[1].rotation.z=.25+k*.3;
+  legs[0].rotation.x=Math.sin(t*2.6)*.25+k*.5; legs[1].rotation.x=-Math.sin(t*2.6)*.25+k*.5;
+  antBall.position.x=.4+Math.sin(t*5)*.04*(1+k*3);
+  const blink=(t%3.4)<.12; eyes.forEach(e=>e.scale.y=blink?.25:1.7);
+  flames.forEach((fm,i)=>{fm.scale.set(1,.35+k*1.6+Math.sin(t*40+i)*.12,1);});
+  if(k>.25&&Math.random()<k*.9){const p=puffs[puffIdx++%puffs.length];p.life=1;p.m.visible=true;
+    p.m.position.copy(flames[Math.random()<.5?0:2].getWorldPosition(tmp)).add(new V3(rand(-.1,.1),-.3,rand(-.1,.1)));}
+  puffs.forEach(p=>{if(p.life<=0)return;p.life-=dt*1.8;p.m.material.opacity=Math.max(p.life,0);p.m.scale.setScalar(.6+(1-p.life)*1.4);if(p.life<=0)p.m.visible=false;});
+
+  // camera
+  camDist+=(camDistTarget-camDist)*(1-Math.exp(-2.5*dt));
+  if(mode==='overview')camTarget.lerp(CENTER,1-Math.exp(-3*dt));
+  else camTarget.lerp(tmp.copy(player.position).add(new V3(0,1.3,0)),1-Math.exp(-8*dt));
+  const cp=Math.cos(camPitch);
+  camera.position.set(camTarget.x+Math.sin(camYaw)*cp*camDist, camTarget.y+Math.sin(camPitch)*camDist, camTarget.z+Math.cos(camYaw)*cp*camDist);
+  camera.lookAt(camTarget);
+  renderer.render(scene,camera);
+  requestAnimationFrame(step);
+}
+camTarget.copy(player.position);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+requestAnimationFrame(step);
+
+/* ---------- W-00 HOME + BLACKHOLE TRANSITION ---------- */
+const home=$('#home'), veil=$('#veil'), enterBtn=$('#enterBtn'), bhC=$('#bhCanvas');
+const worldUI=['#brand','#help','#dock','#period','#probeBtn'].map($);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+(()=>{const box=home.querySelector('.home-stars'),cols=['#fff','#ffe9a8','#bfe3ff','#ffc2dc'];
+  for(let i=0;i<90;i++){const d=document.createElement('i');d.className='hstar';const s=rand(1.5,4);
+    d.style.cssText=`left:${rand(0,100)}%;top:${rand(0,100)}%;width:${s}px;height:${s}px;background:${cols[i%4]}`;box.appendChild(d);}})();
+
+function recBtn(P,r,right){const b=document.createElement('button');b.className='rec';
+  b.innerHTML=`<span class="pdot" style="background:${P.css}"></span><span class="t">${esc(r?r.t:P.name)}</span>${right}`;
+  b.onclick=()=>enter(P,r);return b;}
+function renderHome(){
+  let n=0,todayN=0;const td=today(),all=[];
+  PLANETS.forEach(P=>P.records.forEach(r=>{n++;if(r.d===td)todayN++;all.push({P,r});}));
+  $('#hGreet').innerHTML=todayN?`오늘 별 <em>${todayN}개</em>를 띄웠어요`:'오늘은 아직 별이 없어요';
+  $('#hStats').innerHTML=`<b>${n}</b>개의 별 <b>${PLANETS.length}</b>개의 행성`;
+  const pk=pickRedis();
+  if(!pk)$('#hRedis').innerHTML='<div class="eyebrow">오늘의 재발견</div><p>다시 만날 별이 아직 없어요.</p>';
+  else{const rp=pk.P,rr=pk.r;
+    $('#hRedis').innerHTML=`<div class="eyebrow">${pk.days}일 전 오늘의 별</div><h3>${esc(rr.t)}</h3><p>${esc(rr.b)}</p><button class="btn" id="hRedisGo"><span class="pdot" style="background:${rp.css}"></span>${esc(rp.name)}에서 보기</button>`;
+    $('#hRedisGo').onclick=()=>enter(rp,rr);}
+  const pl=$('#hPlanets');pl.innerHTML='';PLANETS.forEach(P=>pl.appendChild(recBtn(P,null,`<span class="n2">${P.records.length}</span>`)));
+  const rc=$('#hRecent');rc.innerHTML='';
+  all.sort((a,b)=>b.r.d.localeCompare(a.r.d)).slice(0,5).forEach(({P,r})=>rc.appendChild(recBtn(P,r,`<span class="d">${short(r.d)}</span>`)));
+  homeStates();
+}
+renderHome();
+$('#hProbe').onclick=()=>openProbe();
+enterBtn.onclick=()=>enter();
+$('#goHome').onclick=()=>leave();
+
+// blackhole emblem
+let bhSpin=.22,bhRot=0,bhLast=0;
+function drawBH(now){
+  if(home.hidden){bhLast=0;requestAnimationFrame(drawBH);return;}
+  const dt=bhLast?Math.min((now-bhLast)/1000,.05):0;bhLast=now;bhRot+=dt*bhSpin*(reduce?.15:1);
+  const w=bhC.clientWidth,dpr=Math.min(devicePixelRatio,2);
+  if(bhC.width!==Math.round(w*dpr)){bhC.width=bhC.height=Math.round(w*dpr);}
+  const g=bhC.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,w);
+  const c=w/2,k=w/300;
+  const glow=g.createRadialGradient(c,c,40*k,c,c,150*k);glow.addColorStop(0,'rgba(122,108,255,.55)');glow.addColorStop(1,'rgba(122,108,255,0)');
+  g.fillStyle=glow;g.fillRect(0,0,w,w);
+  g.lineCap='round';
+  const rings=[[128,'#7a6cff',.7,2.2],[108,'#ff5d8f',1,1.7],[88,'#ffd23f',1.5,2.6]];
+  rings.forEach(([r,col,sp,len],i)=>{for(let j=0;j<2;j++){const a=bhRot*sp+i*1.3+j*Math.PI;
+    g.beginPath();g.arc(c,c,r*k,a,a+len);g.strokeStyle='#1a1430';g.lineWidth=17*k;g.stroke();
+    g.beginPath();g.arc(c,c,r*k,a,a+len);g.strokeStyle=col;g.lineWidth=10*k;g.stroke();}});
+  for(let i=0;i<16;i++){const ph=((bhRot*.25+i/16)%1),rr=(145-ph*85)*k,a=i*2.4+ph*7+bhRot;
+    g.beginPath();g.arc(c+Math.cos(a)*rr,c+Math.sin(a)*rr,(3.2-ph*2)*k,0,6.3);g.fillStyle=i%3?'#fff':'#ffd23f';g.globalAlpha=1-ph*.6;g.fill();g.globalAlpha=1;}
+  g.beginPath();g.arc(c,c,66*k,0,6.3);g.fillStyle='#0c0820';g.fill();g.lineWidth=5*k;g.strokeStyle='#1a1430';g.stroke();
+  requestAnimationFrame(drawBH);
+}
+requestAnimationFrame(drawBH);
+
+const wait=(ms,skippable)=>new Promise(res=>{const t0=performance.now();(function f(){if((skippable&&skip)||performance.now()-t0>=ms)res();else requestAnimationFrame(f);})();});
+const tween=(ms,fn,ease)=>new Promise(res=>{const t0=performance.now();(function f(){const p=Math.min((performance.now()-t0)/ms,1);fn(ease?ease(p):p);p<1?requestAnimationFrame(f):res();})();});
+const outExpo=p=>1-Math.pow(1-p,3.2);
+const hole=R=>{veil.style.background=`radial-gradient(circle at 50% 50%, transparent ${R}px, #1a1430 ${R+3}px)`;};
+const diag=()=>Math.hypot(innerWidth,innerHeight)/2+30;
+addEventListener('pointerdown',()=>{if(busy&&!inWorld)skip=true;},true);
+
+async function enter(P,rec){
+  if(busy||inWorld)return; busy=true; skip=false;
+  await wait(0);
+  veil.style.background='';veil.style.opacity='';veil.style.clipPath='';
+  if(reduce){veil.hidden=false;await tween(200,p=>veil.style.opacity=p);}
+  else{
+    const br=enterBtn.getBoundingClientRect(),cx=br.left+br.width/2,cy=br.top+br.height/2;
+    bhSpin=1.6;
+    bhC.animate([{transform:'scale(1)'},{transform:'scale(2.5)'}],{duration:300,easing:'ease-in',fill:'forwards'});
+    await wait(180,true);
+    const els=[...home.querySelectorAll('[data-suck]'),enterBtn].map(el=>{const r=el.getBoundingClientRect();return{el,dx:cx-(r.left+r.width/2),dy:cy-(r.top+r.height/2)};})
+      .sort((a,b)=>Math.hypot(a.dx,a.dy)-Math.hypot(b.dx,b.dy));
+    els.forEach(({el,dx,dy},i)=>el.animate([{transform:'none',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(0) rotate(${i%2?30:-30}deg)`,opacity:0}],
+      {duration:520,delay:i*30,easing:'cubic-bezier(.55,0,1,.45)',fill:'forwards'}));
+    const st=home.querySelector('.home-stars');st.style.transformOrigin=`${cx}px ${cy+home.scrollTop}px`;
+    st.animate([{transform:'none',opacity:1},{transform:'rotate(140deg) scale(0)',opacity:0}],{duration:700,easing:'cubic-bezier(.55,0,1,.45)',fill:'forwards'});
+    await wait(560,true);
+    veil.hidden=false;
+    await tween(skip?120:300,p=>veil.style.clipPath=`circle(${p*p*diag()*2.2}px at ${cx}px ${cy}px)`);
+    veil.style.clipPath='';
+  }
+  // swap behind the veil
+  home.hidden=true; bhSpin=.22;
+  home.querySelectorAll('*').forEach(el=>el.getAnimations&&el.getAnimations().forEach(a=>a.cancel()));
+  worldUI.forEach(el=>el.hidden=false);
+  player.position.set(0,0,10); vel.set(0,0,0); mode='overview'; camYaw=0; camPitch=.5; camDist=OV*.8; camDistTarget=OV; camTarget.copy(CENTER);
+  autopilot=null; for(const k in keys)keys[k]=false;
+  inWorld=true; skip=false; applyPeriod(true);
+  veil.classList.add('waiting'); await wait(380); veil.classList.remove('waiting');   // stands in for loading the universe
+  if(reduce){await tween(200,p=>veil.style.opacity=1-p);}
+  else{const D=diag();await tween(650,p=>hole(p*D),outExpo);}
+  veil.hidden=true; veil.style.background=''; veil.style.opacity='';
+  busy=false;
+  if(P)flyTo(P,rec);
+  else toast('WASD로 날아보거나, 왼쪽 행성을 눌러 바로 이동하세요');
+}
+
+async function leave(){
+  if(busy||!inWorld)return; busy=true; closePanel(); $('#near').hidden=true;
+  const D=diag(); veil.style.opacity=''; hole(D); veil.hidden=false;
+  await tween(reduce?150:400,p=>hole((1-p)*D),p=>p*p);
+  veil.style.background='';
+  inWorld=false; autopilot=null; for(const k in keys)keys[k]=false;
+  worldUI.forEach(el=>el.hidden=true); $('#near').hidden=true; $('#redis').hidden=true; $('#worldMsg').hidden=true;
+  renderHome(); home.hidden=false; home.scrollTop=0;
+  await tween(250,p=>veil.style.opacity=1-p);
+  veil.hidden=true; veil.style.opacity=''; busy=false;
+}
+})();
+</script>
