@@ -1,0 +1,44 @@
+/* 컬러·간격 토큰. 디자이너 1(이슈 #9)이 값을 정해 이 파일을 바꾼다.
+   shortcut: 지금 값은 화면 확인용 임시값이다. 이름을 바꾸면 ui/ui.css 도 같이 바꾼다. */
+:root {
+  --color-bg: #070a18;
+  --color-surface: #11152b;
+  --color-surface-raised: #1a1f3d;
+  --color-border: #2a3160;
+  --color-text: #e8ebff;
+  --color-text-muted: #9aa2cc;
+  --color-primary: #7c8cff;
+  --color-primary-text: #0b0e22;
+  --color-danger: #ff6b7a;
+  --color-success: #4fd1a5;
+  --color-warning: #ffcc66;
+  --color-info: #6cb8ff;
+  --color-overlay: rgb(3 5 15 / 0.7);
+
+  --kind-image: #ff9ad5;
+  --kind-file: #ffd27a;
+  --kind-link: #7cd4ff;
+  --kind-text: #b9a7ff;
+
+  --planet-1: #ff8a7a;
+  --planet-2: #ffc46b;
+  --planet-3: #6be0c4;
+  --planet-4: #7aa8ff;
+  --planet-5: #c08bff;
+  --planet-6: #8b93b8;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 18px;
+  --shadow: 0 8px 32px rgb(0 0 0 / 0.45);
+  --panel-width: 400px;
+  --focus-ring: 0 0 0 2px var(--color-primary);
+}
