@@ -37,7 +37,10 @@ export class PlanetView {
     const dark = color.clone().multiplyScalar(0.72);
     const light = color.clone().lerp(new THREE.Color(0xffffff), 0.45);
 
-    this.body = toon.outlined(new THREE.Mesh(new THREE.IcosahedronGeometry(MODEL_R, 2), toon.mat(color)), 1.035);
+    // 각진 로우폴리 면 (DESIGN 2장 · 8장): 꼭짓점을 나눠 면마다 법선을 따로 둔다
+    const bodyGeo = new THREE.IcosahedronGeometry(MODEL_R, 2).toNonIndexed();
+    bodyGeo.computeVertexNormals();
+    this.body = toon.outlined(new THREE.Mesh(bodyGeo, toon.mat(color)), 1.035);
     this.body.userData.planetId = planet.id;
     this.spin.add(this.body);
 
@@ -153,9 +156,9 @@ export class PlanetView {
     g.fillText(this.name, 384, 100);
     g.font = `600 38px ${fontVar("font-body")}`;
     g.lineWidth = 12;
-    g.strokeText(`별 ${this.count}개`, 384, 160);
+    g.strokeText(`별 ${this.count.toLocaleString("ko-KR")}개`, 384, 160);
     g.fillStyle = "#" + cssColor("yellow", "#ffd23f").getHexString();
-    g.fillText(`별 ${this.count}개`, 384, 160);
+    g.fillText(`별 ${this.count.toLocaleString("ko-KR")}개`, 384, 160);
     (this.label.material as THREE.SpriteMaterial).map!.needsUpdate = true;
   }
 
