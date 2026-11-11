@@ -32,8 +32,14 @@ export function PeriodPicker() {
   return (
     <div className="period">
       <div className="seg" role="group" aria-label="기간">
-        {preset("today", "오늘", () => set(todayPeriod()))}
-        {preset("week", "이번 주", () => set(weekPeriod()))}
+        {preset("today", "오늘", () => {
+          setEditing(false);
+          set(todayPeriod());
+        })}
+        {preset("week", "이번 주", () => {
+          setEditing(false);
+          set(weekPeriod());
+        })}
         {preset("custom", "직접 지정", () => {
           setFrom(period.from);
           setTo(period.to);

@@ -3,7 +3,14 @@
 // - 오류는 RequestError(code, 화면 문구)로 던진다. 서버 문구가 있으면 그것을, 없으면 shared 기본 문구를 쓴다
 // - 서버에 닿지 못하면(네트워크 실패) connection = "lost", 응답을 받으면 "ok"
 import { ERROR_MESSAGES, isApiError, type ErrorCode } from "@spacelog/shared/errors";
-import type { ExportRequest, ExportResponse, StarResponse, UniverseResponse } from "@spacelog/shared/types";
+import type {
+  ExportRequest,
+  ExportResponse,
+  RediscoveryEventRequest,
+  RediscoveryTodayResponse,
+  StarResponse,
+  UniverseResponse,
+} from "@spacelog/shared/types";
 
 const TOKEN_KEY = "space-archive.sessionToken";
 
@@ -99,4 +106,8 @@ export const api = {
   star: (id: string) => request<StarResponse>("GET", `/api/stars/${encodeURIComponent(id)}`),
   /** 탐사선 내보내기 생성 (SPEC 3-8). 복사는 웹이 한다 */
   exportCargo: (body: ExportRequest) => request<ExportResponse>("POST", "/api/export", body),
+  /** 오늘의 재발견 별 (SPEC 3-6). 후보가 없으면 null */
+  rediscoveryToday: () => request<RediscoveryTodayResponse>("GET", "/api/rediscovery/today"),
+  /** 재발견 이벤트 기록 (POST /api/rediscovery/events) */
+  rediscoveryEvent: (body: RediscoveryEventRequest) => request<null>("POST", "/api/rediscovery/events", body),
 };

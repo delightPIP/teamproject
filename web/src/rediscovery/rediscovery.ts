@@ -1,0 +1,108 @@
+// 재발견 웹 쪽 (이슈 #7, SPEC 3-6). 카드 껍데기 UI는 개발 C(#3)가 만들고, 데이터·이벤트·별 열기는 여기서 맡는다.
+// 스토어는 공개 계약(setPeriod·flyToPlanet·openStar)만 쓴다.
+import { useEffect, useState } from "react";
+import { toLocalDateString } from "@spacelog/shared/period";
+import type { RediscoveryEventRequest, RediscoveryTodayResponse, Star } from "@spacelog/shared/types";
+import { api } from "../api/client.ts";
+import { store } from "../state/store.ts";
+import { cardShownKey, isRediscoveryLink, periodToShowStar, starLocalDate } from "./deepLink.ts";
+
+/** 이벤트 기록은 측정용이라 실패해도 화면을 막지 않는다 */
+function record(event: RediscoveryEventRequest): void {
+  api.rediscoveryEvent(event).catch(() => {});
+}
+
+/** 재발견 별 열기: 기간 밖이면 직접 지정으로 넓힘 → 그 행성으로 이동 → 별 상세 (SPEC 3-6, #19 도착 화면 = 별 상세) */
+export async function openRediscoveredStar(star: Star): Promise<void> {
+  const s = store.getState();
+  const period = periodToShowStar(starLocalDate(star), s.period);
+  if (period) await s.setPeriod(period);
+  await store.getState().flyToPlanet(star.planetId);
+  store.getState().openStar(star.id);
+}
+
+/** 수집 앱 알림이 연 주소(`#/star/:id?from=rediscovery`) 처리. opened 이벤트는 수집 앱이 이미 기록한다 (SPEC 3-6) */
+export async function handleRediscoveryDeepLink(routeStarId: string | null, params: URLSearchParams): Promise<boolean> {
+  if (!routeStarId || !isRediscoveryLink(params)) return false;
+  try {
+    const star = await api.star(routeStarId);
+    await openRediscoveredStar(star);
+  } catch {
+    // 삭제된 별 등: 기본 라우팅(별 상세 자리)이 오류를 보여준다
+  }
+  return true;
+}
+
+export interface RediscoveryCardState {
+  today: RediscoveryTodayResponse;
+  /** 카드 [보러 가기] */
+  open(): void;
+  /** 카드 닫기 (오늘은 다시 보이지 않음) */
+  dismiss(): void;
+}
+
+function markShownOnce(localDate: string, starId: string): boolean {
+  const key = cardShownKey(localDate, starId);
+  try {
+    if (localStorage.getItem(key)) return false;
+    localStorage.setItem(key, "1");
+  } catch {
+    // 저장소를 못 쓰면 매번 보낸다 (측정이 조금 부풀 뿐)
+  }
+  return true;
+}
+
+/**
+ * 우주 홈 재발견 카드용 데이터 훅. 개발 C의 카드 UI가 쓴다.
+ * today가 null이면(후보 없음·닫음) 카드를 띄우지 않는다.
+ */
+export function useRediscoveryCard(): RediscoveryCardState {
+  const [today, setToday] = useState<RediscoveryTodayResponse>(null);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .rediscoveryToday()
+      .then((res) => {
+        if (!alive || !res) return;
+        if (isDismissedToday(res.star.id)) return;
+        setToday(res);
+        if (markShownOnce(toLocalDateString(new Date()), res.star.id)) record({ starId: res.star.id, channel: "card", type: "shown" });
+      })
+      .catch(() => {}); // 카드는 보조 입구라 실패하면 띄우지 않는다
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return {
+    today,
+    open() {
+      if (!today) return;
+      record({ starId: today.star.id, channel: "card", type: "opened" });
+      void openRediscoveredStar(today.star);
+    },
+    dismiss() {
+      if (!today) return;
+      record({ starId: today.star.id, channel: "card", type: "dismissed" });
+      rememberDismissed(today.star.id);
+      setToday(null);
+    },
+  };
+}
+
+const dismissedKey = (starId: string) => `${cardShownKey(toLocalDateString(new Date()), starId)}.dismissed`;
+function isDismissedToday(starId: string): boolean {
+  try {
+    return localStorage.getItem(dismissedKey(starId)) === "1";
+  } catch {
+    return false;
+  }
+}
+function rememberDismissed(starId: string): void {
+  try {
+    localStorage.setItem(dismissedKey(starId), "1");
+  } catch {
+    // 저장 못 하면 새로고침 때 다시 보인다
+  }
+}
