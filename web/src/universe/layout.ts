@@ -81,8 +81,8 @@ export function distance(a: Vec3, b: Vec3): number {
 }
 
 export interface Orbit {
-  /** 행성 반지름에 곱할 궤도 반지름 배수 1.6 ~ 3.0 */
-  radiusFactor: number;
+  /** 행성 반지름에 더할 거리 2.4 ~ 4.2 (DESIGN 8장) */
+  radiusOffset: number;
   /** 궤도면 기울기 (라디안) */
   tiltX: number;
   tiltZ: number;
@@ -96,7 +96,7 @@ export interface Orbit {
 export function starOrbit(starId: string): Orbit {
   const rnd = seeded(starId);
   return {
-    radiusFactor: 1.6 + rnd() * 1.4,
+    radiusOffset: 2.4 + rnd() * 1.8,
     tiltX: (rnd() - 0.5) * 1.4,
     tiltZ: (rnd() - 0.5) * 1.4,
     phase: rnd() * Math.PI * 2,

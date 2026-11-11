@@ -2,10 +2,11 @@
 //   POST /api/stars  multipart 필드 "files" (최대 20개)  또는  JSON { kind: "text", text } | { kind: "link", url }
 //   → CreateStarsResponse. 일부만 실패해도 나머지는 저장한다 (P 3-3)
 //   PATCH /api/stars  { ids, planetId?, memo? } → { stars }. 넣은 직후 확인 카드 일괄 적용 (SPEC 2-6)
+//   GET /api/stars/:id → Star. 기간 밖 별 열기(재발견 딥링크·카드, 웹 스토어의 applyRoute)가 부른다
 import type { IncomingMessage } from "node:http";
 import { Readable } from "node:stream";
 import { localDate } from "@spacelog/shared/period";
-import type { CreateStarsResponse, StarsResponse } from "@spacelog/shared/types";
+import type { CreateStarsResponse, StarResponse, StarsResponse } from "@spacelog/shared/types";
 import type { RouteHandler } from "../app.ts";
 import { isObject, readJson } from "../http/body.ts";
 import { RouteError } from "../http/routeError.ts";
@@ -90,10 +91,18 @@ export async function bulkUpdateStars(vault: Vault, req: IncomingMessage, now: D
   return { stars: stars.map((s) => ({ ...s, localDate: localDate(s.createdAtUtc, now), originalMissing: vault.originalMissing(s) })) };
 }
 
+/** 별 하나. 없으면 NOT_FOUND (웹은 "별을 찾을 수 없어요"로 처리) */
+export function getStarById(vault: Vault, id: string, now: Date): StarResponse {
+  const star = vault.getStar(id);
+  if (!star) throw RouteError.of("NOT_FOUND");
+  return { ...star, localDate: localDate(star.createdAtUtc, now), originalMissing: vault.originalMissing(star) };
+}
+
 export function starRoutes(vault: Vault, deps: { now?: () => Date } = {}): Record<string, RouteHandler> {
   const now = deps.now ?? (() => new Date());
   return {
     "POST /api/stars": (req) => createStars(vault, req, now()),
     "PATCH /api/stars": (req) => bulkUpdateStars(vault, req, now()),
+    "GET /api/stars/:id": (_req, params) => getStarById(vault, params.id, now()),
   };
 }

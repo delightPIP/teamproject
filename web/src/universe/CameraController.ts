@@ -53,7 +53,7 @@ export class CameraController {
 
   wheel(dy: number, mode: Mode): void {
     if (mode === "overview") this.ovZoom = clamp(this.ovZoom + dy * 0.001, 0.35, 2.5);
-    else this.dist = clamp(this.dist + dy * 0.01, 5, 30);
+    else this.dist = clamp(this.dist + dy * 0.01, 5, 80); // DESIGN 9-4
   }
 
   /** 따라가기 시점의 앞 · 오른쪽 방향 (WASD 기준) */

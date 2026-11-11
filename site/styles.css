@@ -297,6 +297,9 @@ h2 {
   white-space: nowrap;
 }
 .pill.ready { background: var(--p3); }
+a.pill { color: var(--ink); text-decoration: none; }
+a.pill:hover,
+a.pill:focus-visible { background: var(--yellow); }
 .pill.soon { background: var(--panel-2); color: var(--mute); }
 
 pre {
