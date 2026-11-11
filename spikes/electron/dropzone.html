@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
+<title>SpaceLog 드롭존 (스파이크)</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 12px system-ui, sans-serif; color: #e8e8f0; background: #14142a; }
+  #zone { box-sizing: border-box; height: 120px; margin: 8px; border: 2px dashed #6a6aa0; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center; text-align: center; }
+  #zone.over { border-color: #ffd36a; background: #22224a; }
+  #log { margin: 0 8px; height: calc(100% - 150px); overflow: auto; white-space: pre-wrap; font: 11px ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<div id="zone">여기에 끌어다 놓으세요<br>파일 · 이미지 · 링크 · 텍스트</div>
+<div id="log"></div>
+<script src="dropzone.js"></script>
+</body>
+</html>

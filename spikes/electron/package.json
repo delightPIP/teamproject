@@ -1,0 +1,15 @@
+{
+  "name": "spacelog-spike-electron",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ADR 0001 스파이크: Electron 수집 앱 후보",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . SpaceLogSpike --out=dist --overwrite --prune=true --ignore=^/measure"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^45.3.0"
+  }
+}
