@@ -347,7 +347,7 @@ URL(해시 라우팅): `#/` 우주 홈 · `#/planet/:id` · `#/star/:id` · `#/p
 | `POST /api/export` | 웹 | `{items: CargoItem[], format}` → `{content, charCount, overLimit}` |
 | `GET /api/settings` · `PATCH /api/settings` · `GET /api/storage` | 수집 앱 | 설정, 보관함 크기·남은 공간 |
 
-오류 코드: `UNAUTHORIZED` · `FORBIDDEN_ORIGIN` · `DUPLICATE` · `FOLDER_NOT_ALLOWED` · `FILE_TOO_LARGE` · `TOO_MANY_FILES` · `UNSUPPORTED_CLIPBOARD` · `TEXT_EMPTY` · `PLANET_NAME_INVALID` · `PLANET_NAME_DUPLICATE` · `PLANET_LIMIT` · `PLANET_NOT_EMPTY` · `PLANET_SYSTEM` · `VAULT_UNAVAILABLE` · `DISK_FULL` · `ORIGINAL_MISSING` · `NOT_FOUND`
+오류 코드: `UNAUTHORIZED` · `FORBIDDEN_ORIGIN` · `DUPLICATE` · `FOLDER_NOT_ALLOWED` · `FILE_TOO_LARGE` · `TOO_MANY_FILES` · `UNSUPPORTED_CLIPBOARD` · `TEXT_EMPTY` · `PLANET_NAME_INVALID` · `PLANET_NAME_DUPLICATE` · `PLANET_LIMIT` · `PLANET_NOT_EMPTY` · `PLANET_SYSTEM` · `VAULT_UNAVAILABLE` · `DISK_FULL` · `ORIGINAL_MISSING` · `NOT_FOUND` · `INVALID_REQUEST`(본문이 JSON이 아니거나 너무 큼, 필수 값 없음. 2026-11-11 개발 B 추가)
 
 ### 2-7. 보관함 폴더 구조 (개발 B)
 
@@ -397,7 +397,7 @@ sequenceDiagram
 ```
 
 - **종류 판별**: 파일 → 이미지 MIME이면 `image`, 아니면 `file`. 텍스트가 `http(s)://`로 시작하는 URL 한 줄이면 `link`, 아니면 `text`. 텍스트가 100,000자를 넘으면 `.txt` 파일로 만들어 `file`로 저장 (P 2-6).
-- **행성 자동 배정** (P 2-3 키워드 규칙): 파일 이름·확장자·URL·텍스트 앞 2,000자를 행성 키워드와 비교해 도메인 → 확장자 → 키워드 개수 순으로 고른다. 행성 이름도 키워드다. 맞는 행성이 없으면 미분류. 링크 제목은 저장 뒤에 오므로 쓰지 않는다.
+- **행성 자동 배정** (P 2-3 키워드 규칙): 파일 이름·확장자·링크 도메인(경로 제외)·텍스트 앞 2,000자를 행성 키워드와 비교해 도메인 → 확장자 → 키워드 개수 순으로 고른다. 행성 이름도 키워드다. 맞는 행성이 없으면 미분류. 링크 제목은 저장 뒤에 오므로 쓰지 않는다.
 - 여러 파일을 넣으면 파일마다 Star를 만들고, 거부된 파일은 이유와 함께 따로 돌려준다 (P 3-3).
 
 ### 3-3. 웹 초기 로드 (개발 C)

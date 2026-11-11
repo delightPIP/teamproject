@@ -3,9 +3,9 @@ import { describe, it } from "node:test";
 import { apiError, ERROR_CODES, ERROR_MESSAGES, ERROR_STATUS, formatErrorMessage, isApiError } from "./errors.ts";
 
 describe("errors", () => {
-  it("SPEC 2-6의 17종", () => {
-    assert.equal(ERROR_CODES.length, 17);
-    assert.equal(new Set(ERROR_CODES).size, 17);
+  it("SPEC 2-6의 18종", () => {
+    assert.equal(ERROR_CODES.length, 18);
+    assert.equal(new Set(ERROR_CODES).size, 18);
     for (const c of ERROR_CODES) {
       assert.ok(ERROR_MESSAGES[c], c);
       assert.ok(ERROR_STATUS[c] >= 400 && ERROR_STATUS[c] < 600, c);

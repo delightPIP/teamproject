@@ -19,6 +19,6 @@
 | `export.json` · `export.overLimit.json` | `POST /api/export` | 일반 / 50,000자 초과 경고 |
 | `settings.json` | `GET /api/settings` | 기본 설정 |
 | `storage.json` · `storage.lowDisk.json` | `GET /api/storage` | 여유 / 1GB 미만 |
-| `errors.json` | 모든 API | 오류 코드 17종 응답 예시 (`{"error":{"code","message"}}`) |
+| `errors.json` | 모든 API | 오류 코드 18종 응답 예시 (`{"error":{"code","message"}}`) |
 
 `npm test`가 목업과 타입이 어긋나는지 검사한다 (`mocks.test.ts`). 타입을 바꾸면 목업도 같이 고친다.

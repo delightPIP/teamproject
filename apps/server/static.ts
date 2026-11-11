@@ -52,6 +52,7 @@ export async function serveStatic(webDir: string, urlPath: string, method: strin
     res.end();
     return true;
   }
-  createReadStream(file).pipe(res);
+  // 읽는 도중 실패(파일 삭제 등)해도 서버가 죽지 않게 연결만 끊는다
+  createReadStream(file).on("error", () => res.destroy()).pipe(res);
   return true;
 }

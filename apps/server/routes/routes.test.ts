@@ -164,13 +164,13 @@ describe("서버에 붙여 HTTP로 호출", () => {
     assert.equal(json.daysAgo, 7);
   });
 
-  it("POST events → 기록, 틀린 본문은 본문 없는 400", async () => {
+  it("POST events → 기록, 틀린 본문은 400 INVALID_REQUEST", async () => {
     const ok = await call("POST", "/api/rediscovery/events", JSON.stringify({ starId: "a", channel: "card", type: "opened" }));
     assert.equal(ok.status, 200);
     assert.deepEqual(repo.events[0], { id: "ev1", localDate: "2026-11-11", atUtc: NOW.toISOString(), starId: "a", channel: "card", type: "opened" });
     const bad = await call("POST", "/api/rediscovery/events", "{not json");
     assert.equal(bad.status, 400);
-    assert.equal(bad.body, "");
+    assert.equal(JSON.parse(bad.body).error.code, "INVALID_REQUEST");
   });
 
   it("POST export → Claude 프롬프트", async () => {

@@ -4,13 +4,15 @@ import { createServer, request, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
-import { startServer } from "./app.ts";
+import { routes, startServer } from "./app.ts";
 import { configFromEnv, type ServerConfig } from "./config.ts";
+import { DEFAULT_BODY_LIMIT, readJson } from "./http/body.ts";
+import { RouteError } from "./http/routeError.ts";
 import { resolveStaticPath } from "./static.ts";
 
 const TOKEN = "test-token-1234";
 
-function call(port: number, path: string, headers: Record<string, string> = {}, method = "GET") {
+function call(port: number, path: string, headers: Record<string, string> = {}, method = "GET", body?: string) {
   return new Promise<{ status: number; headers: Record<string, unknown>; body: string }>((ok, fail) => {
     const req = request({ host: "127.0.0.1", port, path, method, headers: { host: `127.0.0.1:${port}`, ...headers } }, (res) => {
       let body = "";
@@ -19,7 +21,7 @@ function call(port: number, path: string, headers: Record<string, string> = {}, 
       res.on("end", () => ok({ status: res.statusCode ?? 0, headers: res.headers, body }));
     });
     req.on("error", fail);
-    req.end();
+    req.end(body);
   });
 }
 
@@ -135,5 +137,61 @@ describe("설정·포트", () => {
     } finally {
       blocker.close();
     }
+  });
+});
+
+describe("라우트·본문", () => {
+  let server: Server;
+  let port: number;
+  const auth = { "x-session-token": TOKEN };
+  const added = ["GET /api/test/items/:id", "GET /api/test/items/:id/parts/:part", "POST /api/test/echo", "GET /api/test/fail"];
+
+  before(async () => {
+    routes.set(added[0], (_req, p) => ({ id: p.id }));
+    routes.set(added[1], (_req, p) => p);
+    routes.set(added[2], async (req) => ({ got: await readJson(req) }));
+    routes.set(added[3], () => {
+      throw RouteError.of("PLANET_SYSTEM");
+    });
+    ({ server, port } = await startServer({ token: TOKEN, basePort: 0, webDir: null, devOrigin: null }));
+  });
+  after(() => {
+    for (const k of added) routes.delete(k);
+    server.close();
+  });
+
+  it("경로 파라미터를 디코딩해 넘긴다", async () => {
+    assert.deepEqual(JSON.parse((await call(port, "/api/test/items/01J%20X", auth)).body), { id: "01J X" });
+    assert.deepEqual(JSON.parse((await call(port, "/api/test/items/a/parts/b", auth)).body), { id: "a", part: "b" });
+  });
+
+  it("자리 수가 다르거나 비었거나 디코딩이 안 되면 404", async () => {
+    for (const p of ["/api/test/items", "/api/test/items/", "/api/test/items/a/b", "/api/test/items/%E0%A4%A"]) {
+      assert.equal((await call(port, p, auth)).status, 404, p);
+    }
+  });
+
+  it("다른 메서드는 404", async () => {
+    assert.equal((await call(port, "/api/test/items/a", auth, "DELETE")).status, 404);
+  });
+
+  it("JSON 본문을 읽는다", async () => {
+    const r = await call(port, "/api/test/echo", { ...auth, "content-type": "application/json" }, "POST", JSON.stringify({ a: "별" }));
+    assert.equal(r.status, 200);
+    assert.deepEqual(JSON.parse(r.body), { got: { a: "별" } });
+  });
+
+  it("JSON이 아니거나 비었거나 너무 크면 400 INVALID_REQUEST", async () => {
+    for (const body of ["{broken", "", "x".repeat(DEFAULT_BODY_LIMIT + 1)]) {
+      const r = await call(port, "/api/test/echo", auth, "POST", body);
+      assert.equal(r.status, 400);
+      assert.equal(JSON.parse(r.body).error.code, "INVALID_REQUEST");
+    }
+  });
+
+  it("핸들러가 RouteError를 던지면 그 코드로 응답", async () => {
+    const r = await call(port, "/api/test/fail", auth);
+    assert.equal(r.status, 403);
+    assert.equal(JSON.parse(r.body).error.code, "PLANET_SYSTEM");
   });
 });
