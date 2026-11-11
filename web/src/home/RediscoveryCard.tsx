@@ -1,4 +1,6 @@
 import type { DaysAgo, Star } from "@spacelog/shared/types";
+import { useRediscoveryCard } from "../rediscovery/rediscovery.ts";
+import { useStore } from "../state/store.ts";
 import { Button } from "../ui/Button.tsx";
 import { Thumbnail } from "../ui/Thumbnail.tsx";
 import { starTitle } from "../ui/starTitle.ts";
@@ -7,16 +9,24 @@ type Props = {
   star: Star;
   daysAgo: DaysAgo;
   planetName: string;
-  /** [보러 가기]. 기간 바꾸기·이동·opened 이벤트는 개발 A(#7)가 연결 */
+  /** [보러 가기] */
   onOpen(): void;
-  /** [닫기]. 그날 다시 띄우지 않기·dismissed 이벤트는 개발 A(#7)가 연결 */
+  /** [닫기] */
   onDismiss(): void;
 };
 
 /**
- * "N일 전 오늘의 별" 카드 껍데기 (SPEC 1-4). 화면만 그리고 데이터·이벤트는 props 로 받는다.
- * 후보가 없으면 부모가 렌더링하지 않는다.
+ * 우주 홈의 재발견 카드 (SPEC 1-4). 오늘의 별·이벤트 기록·별 열기는 개발 A의 useRediscoveryCard()(#7)가 맡는다.
+ * 후보가 없거나 오늘 닫았으면 그리지 않는다.
  */
+export function RediscoverySlot() {
+  const { today, open, dismiss } = useRediscoveryCard();
+  const planetName = useStore((s) => s.planets.find((p) => p.id === today?.star.planetId)?.name);
+  if (!today) return null;
+  return <RediscoveryCard star={today.star} daysAgo={today.daysAgo} planetName={planetName ?? "행성"} onOpen={open} onDismiss={dismiss} />;
+}
+
+/** "N일 전 오늘의 별" 카드 화면. 데이터·이벤트는 props 로 받는다 */
 export function RediscoveryCard({ star, daysAgo, planetName, onOpen, onDismiss }: Props) {
   const title = starTitle(star);
   return (
