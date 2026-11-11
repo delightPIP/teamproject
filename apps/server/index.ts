@@ -8,6 +8,7 @@ import { exportRoutes } from "./routes/export.ts";
 import { mountRoutes } from "./routes/mount.ts";
 import { rediscoveryRoutes } from "./routes/rediscovery.ts";
 import { starRoutes } from "./routes/stars.ts";
+import { starUpdateRoutes } from "./routes/starsUpdate.ts";
 import { universeRoutes } from "./routes/universe.ts";
 import { openVault } from "./vault/db.ts";
 
@@ -27,6 +28,7 @@ try {
     mountRoutes(routes, exportRoutes(vault));
     mountRoutes(routes, universeRoutes(vault));
     mountRoutes(routes, starRoutes(vault));
+    mountRoutes(routes, starUpdateRoutes(vault));
   }
   const { port } = await startServer(config);
   report({ type: "listening", port });
