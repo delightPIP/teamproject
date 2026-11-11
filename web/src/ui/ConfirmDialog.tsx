@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Button } from "./Button";
-import { Modal } from "./Modal";
+import { Button } from "./Button.tsx";
+import { Modal } from "./Modal.tsx";
 
 type Props = {
   open: boolean;

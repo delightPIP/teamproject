@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { store, useStore, type ToastItem } from "../state/store";
+import { store, useStore, type ToastItem } from "../state/store.ts";
 
 const DURATION_MS = 4000;
 

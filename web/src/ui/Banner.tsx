@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button } from "./Button";
+import { Button } from "./Button.tsx";
 
 type Props = { tone?: "info" | "warning" | "error"; children: ReactNode; action?: { label: string; onClick(): void; disabled?: boolean } };
 

@@ -1,10 +1,10 @@
 // 웹 상태 스토어 = 화면 사이 계약 (SPEC 2-5). 개발 A·B·C 합의 대상.
 // React 화면은 useStore(selector)로, 3D 코드는 store.getState()/store.subscribe()로 쓴다.
 import { createStore, useStore as useZustand } from "zustand";
-import { api, ApiError } from "../api/client";
-import { samePeriod, todayPeriod, weekPeriod } from "../period";
-import { formatHash, type Route } from "../router";
-import type { Camera, CargoItem, Period, WebState } from "../types";
+import { todayPeriod, weekPeriod } from "@spacelog/shared/period";
+import type { CargoItem, Period, WebState } from "@spacelog/shared/types";
+import { api, RequestError } from "../api/client.ts";
+import { formatHash, type Route } from "../router.ts";
 
 export interface ToastItem {
   id: number;
@@ -36,7 +36,7 @@ export interface Store extends WebState {
   /** 3D가 자동 비행 구현을 등록한다. 등록이 없으면(WebGL 없음 등) 바로 openPanel */
   registerFlyToPlanet(handler: FlyHandler | null): void;
   /** 3D가 카메라 상태를 알린다 */
-  setCamera(camera: Camera): void;
+  setCamera(camera: WebState["camera"]): void;
   /** 개발 B 화면이 삭제·합치기 API 성공 뒤 부른다 → 목록·탐사선·선택 상태 정리 (SPEC 3-7) */
   starsDeleted(ids: string[]): void;
   planetDeleted(planetId: string): void;
@@ -142,7 +142,8 @@ export function createWebStore(navigate: (hash: string) => void = defaultNavigat
       },
 
       async setPeriod(period) {
-        if (samePeriod(period, get().period)) return;
+        const cur = get().period;
+        if (period.preset === cur.preset && period.from === cur.from && period.to === cur.to) return;
         set({ period, periodAutoExpanded: false });
         await get().refresh();
       },
@@ -214,7 +215,7 @@ export function createWebStore(navigate: (hash: string) => void = defaultNavigat
           set({ lastSyncedAt: new Date().toISOString() });
           get().applyRoute(get().route); // 딥링크 별의 행성 찾기
         } catch (e) {
-          if (!(e instanceof ApiError)) throw e;
+          if (!(e instanceof RequestError)) throw e;
         } finally {
           set({ loading: false });
         }
@@ -235,7 +236,7 @@ export function createWebStore(navigate: (hash: string) => void = defaultNavigat
             cargo: get().cargo.filter((c) => c.type !== "planet" || ids.has(c.planetId)),
           });
         } catch (e) {
-          if (!(e instanceof ApiError)) throw e;
+          if (!(e instanceof RequestError)) throw e;
           // 마지막 데이터 유지. connection 은 client 가 "lost"로 바꾼다
         } finally {
           if (seq === loadSeq) set({ loading: false });
@@ -264,7 +265,7 @@ export function createWebStore(navigate: (hash: string) => void = defaultNavigat
                 if (get().selectedStarId === s.id) set({ selectedPlanetId: s.planetId });
               },
               (e) => {
-                if (!(e instanceof ApiError) || get().selectedStarId !== route.id) return;
+                if (!(e instanceof RequestError) || get().selectedStarId !== route.id) return;
                 if (e.code === "NOT_FOUND") {
                   get().showToast("별을 찾을 수 없어요", "error");
                   go({ name: "home" });

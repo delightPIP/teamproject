@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { MESSAGES } from "./api/client";
-import { store, useStore } from "./state/store";
-import { Banner } from "./ui/Banner";
-import { Button } from "./ui/Button";
-import { Modal } from "./ui/Modal";
-import { SidePanel } from "./ui/SidePanel";
-import { ToastHost } from "./ui/Toast";
+import { ERROR_MESSAGES } from "@spacelog/shared/errors";
+import { NETWORK_MESSAGE } from "./api/client.ts";
+import { store, useStore } from "./state/store.ts";
+import { Banner } from "./ui/Banner.tsx";
+import { Button } from "./ui/Button.tsx";
+import { Modal } from "./ui/Modal.tsx";
+import { SidePanel } from "./ui/SidePanel.tsx";
+import { ToastHost } from "./ui/Toast.tsx";
 
 /**
  * 웹 껍데기. 화면 자리만 잡는다.
@@ -35,7 +36,7 @@ export function App() {
 function AuthRequired() {
   return (
     <div className="auth-required" role="alert">
-      <h1>{MESSAGES.UNAUTHORIZED}</h1>
+      <h1>{ERROR_MESSAGES.UNAUTHORIZED}</h1>
       <p>이 창은 보안을 위해 수집 앱에서 열어야 볼 수 있어요.</p>
     </div>
   );
@@ -48,7 +49,7 @@ function ConnectionBanner() {
   if (!lost) return null;
   return (
     <Banner tone="error" action={{ label: "다시 시도", onClick: () => void store.getState().refresh(), disabled: loading }}>
-      {MESSAGES.NETWORK}
+      {NETWORK_MESSAGE}
     </Banner>
   );
 }

@@ -1,4 +1,4 @@
-import type { StarKind } from "../types";
+import type { StarKind } from "@spacelog/shared/types";
 
 const ICON: Record<StarKind, { glyph: string; label: string }> = {
   image: { glyph: "🖼", label: "이미지" },

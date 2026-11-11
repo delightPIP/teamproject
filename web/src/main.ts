@@ -1,10 +1,10 @@
 // 진입점: 토큰 처리 → 라우터 → 초기 로드 (SPEC 3-3)
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { getToken, saveToken, setApiListeners, setMock } from "./api/client";
-import { App } from "./App";
-import { parseHash, takeToken } from "./router";
-import { store } from "./state/store";
+import { getToken, saveToken, setApiListeners, setMock } from "./api/client.ts";
+import { App } from "./App.tsx";
+import { parseHash, takeToken } from "./router.ts";
+import { store } from "./state/store.ts";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./ui/ui.css";
@@ -17,7 +17,7 @@ if (token) saveToken(token);
 history.replaceState(null, "", `${location.pathname}${cleanSearch}${cleanHash}`);
 
 if (import.meta.env.VITE_API_MOCK === "1") {
-  setMock((await import("./api/mock")).mockApi); // 배포 빌드에는 들어가지 않는다
+  setMock((await import("./api/mock.ts")).mockApi); // 배포 빌드에는 들어가지 않는다
 }
 
 setApiListeners({

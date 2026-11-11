@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button } from "./Button";
+import { Button } from "./Button.tsx";
 
 type Props = { title: ReactNode; onClose(): void; children: ReactNode; footer?: ReactNode; headerExtra?: ReactNode };
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { requestObjectUrl } from "../api/client";
-import type { Star } from "../types";
-import { KindIcon } from "./KindIcon";
+import { requestObjectUrl } from "../api/client.ts";
+import type { Star } from "@spacelog/shared/types";
+import { KindIcon } from "./KindIcon.tsx";
 
 /**
  * 썸네일 또는 유형 아이콘 (POLICY 2-7). 처리 중이면 스켈레톤 (SPEC 2-1).
