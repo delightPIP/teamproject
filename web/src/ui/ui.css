@@ -1,5 +1,6 @@
 /* 공통 UI. tokens.css 의 변수만 쓴다. */
 .card {
+  color-scheme: light; /* 밝은 카드 안의 체크박스 · 선택 상자가 어둡게 나오지 않게 (DESIGN 3-1) */
   background: var(--color-surface);
   color: var(--color-text);
   border: var(--line) solid var(--color-border);
@@ -24,7 +25,7 @@
 .btn:hover:not(:disabled) { transform: translateY(-1px); }
 .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--color-border); }
 .btn:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:disabled { background: var(--panel-2); color: var(--mute); box-shadow: none; transform: none; cursor: not-allowed; }
 .btn--primary { background: var(--color-primary); color: var(--color-primary-text); }
 .btn--accent { background: var(--color-accent); color: var(--color-accent-text); }
 .btn--danger { background: var(--color-danger); color: var(--color-danger-text); }
