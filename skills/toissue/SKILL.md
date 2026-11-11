@@ -1,17 +1,22 @@
 ---
 name: toIssue
-description: docs/SPEC.md와 docs/POLICY.md를 바탕으로 GitHub 레포지토리에 작업 이슈(GitHub Issues)들을 자동으로 생성 및 등록합니다. 로컬 문서는 따로 남기지 않습니다.
+description: docs/SPEC.md와 docs/POLICY.md(또는 docs/PRD.md 단독)를 바탕으로 GitHub 레포지토리에 작업 이슈(GitHub Issues)들을 자동으로 생성 및 등록합니다. 로컬 문서는 따로 남기지 않습니다.
 ---
 
 # `/toIssue` — GitHub 이슈(Issue) 자동 등록 스킬
 
-`docs/SPEC.md`와 `docs/POLICY.md`를 분석하여, 팀원들이 겹치지 않고 병렬로 작업할 수 있도록 **GitHub 레포지토리에 이슈(Issues)들을 즉시 등록**합니다.  
+`docs/SPEC.md`와 `docs/POLICY.md`(또는 생략 시 `docs/PRD.md`)를 분석하여, 팀원들이 겹치지 않고 병렬로 작업할 수 있도록 **GitHub 레포지토리에 이슈(Issues)들을 즉시 등록**합니다.  
 (※ 이미 GitHub Issues에 등록되므로 `docs/ISSUES.md` 같은 불필요한 로컬 문서는 생성하지 않습니다.)
 
 ## 실행 절차
 
-### 1. `docs/SPEC.md` 기반 작업 분해
-- 스펙 문서를 읽고, 병렬로 작업할 수 있는 3~5개의 독립 기능 단위로 작업을 나눕니다.
+### 1. 작업 분해 (SPEC/POLICY 또는 PRD 기반)
+- **문서 로딩 및 유연한 Fallback**:
+  - `docs/SPEC.md`와 `docs/POLICY.md`가 존재하면 이를 바탕으로 상세 작업 분해를 진행합니다.
+  - ⚡ **`/toPolicy`, `/toSpec`을 생략한 경우**: 두 문서가 없더라도 멈추거나 에러를 내지 않고, **`docs/PRD.md`의 필수 기능(In-Scope MVP) 및 유저 저니를 분석하여 즉시 이슈를 분해**합니다.
+  - 이 경우, 팀원 간 작업 충돌을 방지하기 위해 AI 에이전트가 프로젝트 성격에 맞는 권장 파일 경로(예: `src/components/`, `src/services/` 등)와 세부 완료 조건(Checklist)을 자체 추론하여 이슈 본문에 명확히 채워 넣습니다.
+- **병렬 분할**: 팀원들이 병렬로 작업할 수 있는 3~5개의 독립 기능 단위로 작업을 나눕니다.
+- **💡 사용자 추가 지시 우선 반영**: 명령어 실행 시 사용자가 별도로 요구한 분할 기준(예: 디자인 시스템/공통 컴포넌트 별도 분리, 특정 모듈 분리, 팀 인원수에 맞춘 N개 분할 등)이 있다면 기본 3~5개 분할 규칙보다 사용자의 지시를 최우선으로 적용합니다.
 - 각 이슈마다 **제목, 담당 파일/모듈, 완료 조건(Checklist)**을 명확히 정의합니다.
 
 ### 2. GitHub 이슈 자동 생성 (`gh issue create`)

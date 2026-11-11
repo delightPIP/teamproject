@@ -24,7 +24,7 @@ flowchart LR
 | **2** | **`/prd [아이디어]`** | 제품 요구사항 정의 | 해결할 문제, 타깃 유저, MVP 필수 범위(In/Out Scope) 정의 |
 | **3** | **`/toPolicy`** | 정책 및 규칙 수립 | PRD를 바탕으로 보안, 데이터, 비즈니스 계산 공식, 예외 처리 규칙 도출 |
 | **4** | **`/toSpec`** | 상세 구현 명세 | 정책과 PRD를 결합하여 화면 레이아웃, 데이터 모델, 상태 흐름 명세화 |
-| **5** | **`/toIssue`** | 작업 이슈 등록 | 스펙을 기반으로 GitHub Issues에 티켓 자동 등록 (로컬 파일 미생성) |
+| **5** | **`/toIssue`** | 작업 이슈 등록 | 스펙(또는 PRD 단독)을 기반으로 GitHub Issues에 티켓 자동 등록 (로컬 파일 미생성) |
 | **6** | **`/impl [이슈]`** | 이슈 기반 구현 | 브랜치 확인 후 `POLICY`와 `SPEC`을 준수하며 대상 코드 구현 및 자체 검증 |
 | **7** | **`/pr`** | PR 검증 및 생성 | `main` rebase 여부 확인, 충돌 검증, 팀원 1명 승인용 PR 본문 생성 |
 
@@ -48,7 +48,7 @@ https://github.com/[저장소-경로]/team-rules 저장소의 skills/ 폴더에 
 ## 🚀 매일 새 과제 레포에서의 사용 흐름
 
 1. 빈 과제 폴더에서 AI 채팅창에 `/init [오늘 과제명]` 실행
-2. 회의하며 화면 띄우고: `/prd` ➔ `/toPolicy` ➔ `/toSpec` ➔ `/toIssue`
+2. 회의하며 화면 띄우고: `/prd` ➔ `/toPolicy` ➔ `/toSpec` ➔ `/toIssue` *(단순 과제는 `/prd` ➔ `/toIssue` 직행 가능)*
 3. 각자 이슈를 할당받은 뒤:
    ```bash
    git checkout main && git pull origin main
