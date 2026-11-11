@@ -38,7 +38,7 @@ let selfTested = false;
 const settings = new SettingsStore();
 // 개발 전용: SPACELOG_SERVER_ENTRY=dev/mockServer.mjs 이면 가짜 서버로 띄운다 (서버 2/4 머지 전 확인용)
 const serverEntry = !app.isPackaged && process.env.SPACELOG_SERVER_ENTRY ? path.resolve(APP_ROOT, process.env.SPACELOG_SERVER_ENTRY) : path.join(DIST, "server.mjs");
-const server = new ServerProcess({ entry: serverEntry, vaultPath: settings.get().vaultPath, webDir: resolveWebDir(APP_ROOT) });
+const server = new ServerProcess({ entry: serverEntry, vaultPath: settings.get().vaultPath, webDir: resolveWebDir(APP_ROOT, app.isPackaged ? { resourcesPath: process.resourcesPath } : undefined) });
 const api = new Api(server);
 const ingest = new Ingest(api);
 const shortcut = new Shortcut(() => void onShortcut());
